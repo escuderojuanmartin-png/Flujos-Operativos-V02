@@ -1,0 +1,1001 @@
+# PROCESS AI — PROMPT MAESTRO PARA GOOGLE AI STUDIO BUILD
+
+## 1. MISIÓN
+
+Quiero que desarrolles desde cero una aplicación web llamada **Process AI**.
+
+Tu función es actuar como arquitecto de software, desarrollador full-stack, especialista en inteligencia artificial, ingeniero de procesos, experto en documentación ISO 9001 y diseñador UX/UI.
+
+Debes CONSTRUIR una aplicación real, funcional, intuitiva y profesional utilizando las capacidades nativas de Google AI Studio Build.
+
+No quiero solamente una maqueta visual, una demostración con datos ficticios o una descripción de cómo desarrollar la aplicación.
+
+Quiero una primera versión funcional que pueda utilizar para documentar procesos empresariales.
+
+### Objetivo central
+
+Transformar la transcripción de una reunión donde una persona explica cómo funciona un proceso o cómo realiza una tarea en:
+
+1. Un proceso, procedimiento o instructivo estructurado.
+2. Un diagrama de flujo editable.
+3. Un documento profesional escrito.
+4. Una lista de preguntas para resolver información incompleta.
+5. Un análisis independiente de puntos de dolor y oportunidades de mejora.
+6. Archivos descargables en Word, PDF y draw.io.
+
+La aplicación debe utilizar Gemini como motor principal de inteligencia artificial.
+
+**PRINCIPIO FUNDAMENTAL: la IA debe documentar lo que realmente se hace, no lo que considera que debería hacerse.**
+
+---
+
+## 2. CONTEXTO Y FILOSOFÍA DEL PRODUCTO
+
+Soy un profesional que realiza relevamientos de procesos empresariales.
+
+Normalmente mantengo reuniones con personas que explican cómo trabajan. Esas conversaciones pueden ser desordenadas, contener varios procesos, incluir excepciones, mencionar sistemas informáticos y presentar información incompleta.
+
+Quiero transformar esas conversaciones en documentación profesional de forma rápida.
+
+La aplicación debe realizar el trabajo pesado mediante inteligencia artificial y permitir que el usuario se concentre en revisar y validar.
+
+### Prioridades
+
+En este orden:
+
+1. Fidelidad a la información original.
+2. Simplicidad de uso.
+3. Calidad profesional de los entregables.
+4. Potencia del motor de IA.
+5. Capacidad de crecimiento.
+
+No quiero una aplicación empresarial compleja con cientos de opciones.
+
+No quiero funciones accesorias de audio narrado, asistentes virtuales, dashboards decorativos, agentes autónomos ni sistemas de gestión de tareas.
+
+**Quiero una herramienta extremadamente sencilla para documentar procesos.**
+
+En la primera versión seré el único usuario, aunque la arquitectura debe admitir otros usuarios en el futuro.
+
+---
+
+## 3. STACK TECNOLÓGICO
+
+Utiliza las capacidades disponibles en Google AI Studio Build.
+
+### Frontend
+
+- React.
+- TypeScript.
+- Tailwind CSS.
+- Componentes accesibles.
+- Iconos Lucide.
+- React Flow (`@xyflow/react`) para la edición de diagramas, si es compatible.
+
+### Backend
+
+Utiliza el runtime Node.js de Google AI Studio.
+
+Toda la lógica sensible debe ejecutarse del lado del servidor.
+
+### Inteligencia artificial
+
+Utiliza la integración oficial de Gemini mediante el SDK de Google.
+
+Aprovecha la variable `GEMINI_API_KEY` gestionada por los secretos de Google AI Studio.
+
+No incluyas claves API en el frontend.
+
+No utilices llamadas falsas que simulen respuestas del modelo.
+
+Selecciona un modelo Gemini disponible con capacidad de razonamiento y generación estructurada.
+
+El modelo debe ser configurable desde el servidor.
+
+### Base de datos y autenticación
+
+Utiliza la integración nativa de Firebase de Google AI Studio.
+
+Implementa:
+
+- Firebase Authentication.
+- Inicio de sesión con Google.
+- Cloud Firestore.
+- Reglas de seguridad.
+- Persistencia entre sesiones.
+
+La información de cada usuario y cliente debe estar protegida.
+
+Inicialmente, la aplicación debe poder limitar el acceso a un único usuario autorizado.
+
+Solicita la habilitación de Firebase cuando corresponda.
+
+Antes de aprovisionar servicios, permite seleccionar preferentemente una región europea adecuada para el almacenamiento de información empresarial.
+
+Para documentos y plantillas binarias, utiliza almacenamiento privado persistente, preferentemente Firebase Storage, si está disponible y correctamente configurado. No utilices el sistema temporal de archivos del servidor como almacenamiento permanente.
+
+Si algún servicio requiere configuración adicional, indícalo de forma concreta y no simules su funcionamiento.
+
+### Arquitectura
+
+Mantén un único proyecto full-stack, sencillo y modular.
+
+No utilices Python, FastAPI, Docker, Kubernetes ni microservicios para esta primera implementación.
+
+Organiza el código por responsabilidades.
+
+---
+
+## 4. EXPERIENCIA DE USUARIO
+
+Quiero una interfaz moderna, minimalista y profesional.
+
+Debe tener una estética similar a una herramienta SaaS de productividad, pero sin complejidad innecesaria.
+
+### Estilo visual
+
+- Fondo claro.
+- Blanco y gris suave.
+- Azul oscuro como color principal.
+- Tipografía limpia.
+- Bordes sutiles.
+- Espacios amplios.
+- Iconografía discreta.
+- Estados visuales fáciles de comprender.
+- Diseño responsive.
+- Idioma español.
+
+No utilizar colores excesivos, tarjetas innecesarias ni gráficos decorativos.
+
+### Navegación principal
+
+La aplicación tendrá tres áreas:
+
+**Clientes**
+
+Listado de empresas y su configuración documental.
+
+**Relevamientos**
+
+Reuniones cargadas y procesos identificados.
+
+**Procesos**
+
+Documentación generada, diagramas y versiones.
+
+### Flujo principal de usuario
+
+La creación de documentación tendrá cinco etapas:
+
+1. Cargar.
+2. Identificar.
+3. Validar.
+4. Revisar.
+5. Exportar.
+
+Mostrar estas etapas mediante una navegación sencilla con progreso visible.
+
+Evitar que el usuario tenga que navegar por numerosas pantallas.
+
+---
+
+## 5. GESTIÓN DE CLIENTES
+
+Permitir crear empresas clientes.
+
+Cada cliente tendrá:
+
+- Nombre.
+- Identificador.
+- Logotipo opcional.
+- Sector o actividad opcional.
+- Plantilla documental.
+- Sistema de codificación.
+- Versión de norma de referencia.
+- Procesos documentados.
+- Relevamientos realizados.
+
+La estructura conceptual será:
+
+**Cliente → Relevamientos → Procesos → Documentos y versiones.**
+
+Un relevamiento puede contener varios procesos.
+
+Un proceso puede contener subprocesos.
+
+Cada cliente debe mantener su información independiente.
+
+### Plantilla documental
+
+Permitir subir una plantilla Word `.docx` del cliente.
+
+El objetivo es generar procedimientos e instructivos manteniendo su identidad documental.
+
+Debe ser posible configurar:
+
+- Logotipo.
+- Encabezado.
+- Pie de página.
+- Título.
+- Código documental.
+- Versión.
+- Fecha.
+- Estilos de títulos y texto.
+- Secciones del documento.
+- Tabla de revisiones.
+
+Implementa un mecanismo real de plantillas con marcadores o campos configurables.
+
+Si una plantilla Word arbitraria no puede interpretarse correctamente, proporciona una opción sencilla para vincular sus campos con las secciones del documento.
+
+No prometas una reproducción exacta de cualquier plantilla sin validación.
+
+Si un cliente no tiene plantilla, utiliza una plantilla profesional predeterminada.
+
+La configuración se guardará y reutilizará.
+
+---
+
+## 6. CARGA DE TRANSCRIPCIONES Y AUDIO
+
+### Formatos iniciales
+
+Implementar:
+
+- TXT.
+- MD.
+- SRT.
+- VTT.
+- MP3.
+- WAV.
+- M4A.
+- WEBM.
+
+También debe existir la opción de pegar texto directamente.
+
+### Funcionamiento
+
+El usuario selecciona un cliente, crea un relevamiento y sube el archivo.
+
+Si es audio, Gemini debe generar la transcripción.
+
+Si es texto, se incorpora directamente.
+
+Debe ser posible revisar y corregir la transcripción antes de analizarla.
+
+### Requisitos
+
+La transcripción puede tener cualquier formato.
+
+Puede contener:
+
+- Distintos interlocutores.
+- Interrupciones.
+- Información repetida.
+- Procesos mezclados.
+- Secuencias desordenadas.
+- Decisiones.
+- Excepciones.
+- Datos faltantes.
+
+No exigir un formato predeterminado.
+
+No eliminar información operativa importante durante el procesamiento.
+
+Si el audio tiene fragmentos no entendidos, señalarlos.
+
+No inventar intervenciones o palabras inaudibles.
+
+Validar formato y tamaño de los archivos y gestionar correctamente los errores de carga.
+
+---
+
+## 7. MOTOR DE INTERPRETACIÓN CON GEMINI
+
+Este es el núcleo de Process AI.
+
+No quiero un simple resumen de una reunión.
+
+Quiero que Gemini actúe como un analista senior de procesos empresariales.
+
+### Primera etapa: interpretación
+
+Analizar la transcripción e identificar:
+
+- Procesos mencionados.
+- Actividades.
+- Responsables.
+- Departamentos.
+- Sistemas utilizados.
+- Entradas.
+- Salidas.
+- Decisiones.
+- Condiciones.
+- Excepciones.
+- Registros.
+- Documentos relacionados.
+- Secuencias operativas.
+- Relaciones entre procesos.
+
+Identificar la secuencia real aunque el entrevistado la haya explicado desordenadamente.
+
+No asumir un orden cuando la información sea contradictoria.
+
+### Segunda etapa: identificación de unidades documentales
+
+Una reunión puede contener varios procesos, procedimientos o instructivos.
+
+Gemini debe identificarlos automáticamente.
+
+Para cada unidad sugerir:
+
+- Nombre.
+- Tipo documental.
+- Descripción.
+- Actividades principales.
+- Procesos relacionados.
+- Motivo de separación, cuando corresponda.
+
+### Clasificación
+
+La IA deberá distinguir entre:
+
+**Proceso:** conjunto de actividades interrelacionadas que transforman entradas en resultados.
+
+**Procedimiento:** descripción de cómo se desarrolla una actividad o conjunto de actividades.
+
+**Instructivo:** instrucciones detalladas para ejecutar una tarea específica.
+
+La clasificación inicial es una recomendación de Gemini.
+
+El usuario puede modificarla.
+
+### Subdivisión inteligente
+
+Evaluar cuándo merece la pena dividir un proceso.
+
+Criterios:
+
+- Complejidad.
+- Cantidad de decisiones.
+- Diversidad de responsables.
+- Excepciones.
+- Dependencias.
+- Cambios de objetivo.
+- Legibilidad del diagrama.
+
+No subdividir únicamente por número de actividades.
+
+Mostrar la recomendación y permitir aceptarla o rechazarla.
+
+No realizar particiones innecesarias.
+
+### Tercera etapa: modelo estructurado
+
+Construir un modelo de cada proceso utilizando JSON estructurado, tipado y validado.
+
+Debe contener:
+
+- Identificador.
+- Nombre.
+- Tipo documental.
+- Objetivo.
+- Alcance.
+- Disparador.
+- Resultado.
+- Entradas.
+- Salidas.
+- Responsables.
+- Actividades.
+- Decisiones.
+- Conexiones.
+- Excepciones.
+- Documentación relacionada.
+- Evidencias.
+- Estado de validación.
+
+Utiliza esquemas estrictos para las respuestas de Gemini y valida los datos antes de guardarlos.
+
+El modelo estructurado será la fuente de verdad para generar documentos y diagramas.
+
+### REGLA ABSOLUTA: NO INVENTAR INFORMACIÓN
+
+Gemini nunca debe inventar:
+
+- Actividades.
+- Responsables.
+- Controles.
+- Duraciones.
+- Sistemas.
+- Aprobaciones.
+- Documentos.
+- Condiciones.
+- Excepciones.
+- Requisitos normativos.
+
+Si un dato no está disponible, marcarlo como pendiente o desconocido.
+
+No utilizar valores genéricos aparentemente reales para completar campos.
+
+Si la API falla, mostrar un error y ofrecer reintentar.
+
+No generar procedimientos ficticios como mecanismo de respaldo.
+
+---
+
+## 8. VALIDACIÓN INTELIGENTE
+
+Una vez identificados los procesos, Gemini debe detectar información incompleta.
+
+### Ejemplo
+
+Transcripción:
+
+"Después de recibir el pedido, alguien lo revisa y, si está correcto, se envía al almacén."
+
+La aplicación debe identificar preguntas como:
+
+- ¿Quién revisa el pedido?
+- ¿Qué criterios determinan si está correcto?
+- ¿Qué sucede cuando contiene errores?
+
+### Interfaz
+
+Crear una sección sencilla denominada **Validación**.
+
+Mostrar las preguntas agrupadas por proceso.
+
+Para cada pregunta, permitir:
+
+- Responder.
+- Marcar como pendiente.
+- Indicar que no corresponde.
+- Revisar el fragmento original relacionado.
+
+Priorizar las preguntas que afecten a la secuencia, las decisiones y los responsables.
+
+No generar decenas de preguntas irrelevantes.
+
+Cuando el usuario responde, actualizar el modelo estructurado conservando la información anterior.
+
+Si existen contradicciones, mostrarlas y solicitar resolución.
+
+### Estados
+
+Cada proceso puede estar:
+
+- Borrador.
+- Pendiente de información.
+- En revisión.
+- Validado.
+
+Solamente el usuario puede confirmar que un proceso ha sido validado.
+
+---
+
+## 9. GENERACIÓN Y EDICIÓN DE DIAGRAMAS
+
+Generar automáticamente un diagrama de flujo para cada proceso.
+
+### Elementos mínimos
+
+- Inicio.
+- Actividad.
+- Decisión.
+- Fin.
+- Flechas y conexiones.
+- Etiquetas de condiciones.
+- Identificación de responsables.
+
+Utilizar símbolos consistentes y comprensibles.
+
+No es necesario implementar BPMN completo.
+
+### Presentación
+
+El diagrama debe ser legible sin reorganización manual obligatoria.
+
+Implementar:
+
+- Distribución automática.
+- Zoom.
+- Desplazamiento.
+- Selección de nodos.
+- Edición de actividad.
+- Cambio de responsable.
+- Inserción de pasos.
+- Eliminación de pasos.
+- Edición de decisiones.
+- Modificación de conexiones.
+
+Permitir vista vertical y, cuando resulte útil, carriles por responsables.
+
+### Sincronización
+
+El diagrama no debe mantener una versión independiente del proceso.
+
+Cada cambio debe actualizar el modelo estructurado.
+
+El procedimiento escrito debe poder sincronizarse con los cambios realizados.
+
+No sobrescribir correcciones manuales sin confirmación.
+
+### draw.io
+
+Implementar exportación real a `.drawio`.
+
+El archivo debe contener elementos y conexiones editables.
+
+No exportar una imagen incrustada.
+
+Utilizar XML compatible con diagrams.net.
+
+---
+
+## 10. GENERACIÓN DE DOCUMENTACIÓN ISO 9001
+
+Utilizar las buenas prácticas de documentación y gestión por procesos asociadas a ISO 9001.
+
+La edición de referencia predeterminada será ISO 9001:2026, permitiendo configurar otras ediciones por cliente.
+
+ISO 9001 no establece una plantilla universal obligatoria.
+
+El formato final debe ajustarse a la plantilla y las necesidades documentales de cada empresa.
+
+No afirmar que el documento garantiza certificación o conformidad normativa.
+
+### Estructura sugerida
+
+Cuando corresponda al tipo documental:
+
+1. Código y título.
+2. Versión y fecha.
+3. Objetivo.
+4. Alcance.
+5. Responsables.
+6. Entradas y requisitos previos.
+7. Desarrollo del procedimiento.
+8. Actividades y decisiones.
+9. Excepciones documentadas.
+10. Salidas.
+11. Registros y documentos relacionados.
+12. Diagrama de flujo.
+13. Control de revisiones.
+
+Las secciones deben ser configurables.
+
+No completar con información inventada las secciones que no estén documentadas.
+
+### Redacción
+
+Utilizar lenguaje profesional, claro y preciso.
+
+Convertir el relato informal en instrucciones comprensibles.
+
+Mantener la terminología utilizada por la empresa.
+
+No introducir tareas nuevas.
+
+No modificar decisiones.
+
+No alterar responsabilidades.
+
+No convertir recomendaciones en obligaciones operativas.
+
+### Principio AS-IS
+
+Documentar exclusivamente cómo se realiza actualmente el proceso según lo relatado y validado.
+
+---
+
+## 11. ANÁLISIS PRIVADO DE MEJORAS
+
+Crear una pestaña denominada **Oportunidades de mejora**.
+
+Este apartado es independiente del documento oficial.
+
+### Funcionalidad
+
+Gemini debe identificar y proponer:
+
+- Puntos de dolor.
+- Actividades manuales.
+- Retrabajos.
+- Duplicidades.
+- Cuellos de botella.
+- Controles débiles.
+- Riesgos operativos.
+- Dependencias de personas.
+- Oportunidades de automatización.
+- Oportunidades de simplificación.
+
+También debo poder marcar manualmente puntos de dolor sobre una actividad.
+
+### Información
+
+Cada hallazgo debe contener:
+
+- Actividad relacionada.
+- Descripción.
+- Evidencia.
+- Impacto potencial.
+- Propuesta preliminar de mejora.
+- Prioridad sugerida.
+- Estado.
+
+Diferenciar problemas expresados por el entrevistado de hipótesis sugeridas por Gemini.
+
+### REGLA CRÍTICA DE SEPARACIÓN
+
+Los hallazgos privados no deben aparecer en el documento oficial.
+
+No incluir automáticamente recomendaciones, riesgos hipotéticos, oportunidades o críticas en el Word o PDF.
+
+Esta separación debe garantizarse mediante el modelo de datos y el código exportador, no solamente mediante un prompt.
+
+El generador de documentos oficiales debe recibir únicamente datos documentales aprobados.
+
+Implementar una comprobación que evite filtraciones de contenido privado a los entregables.
+
+---
+
+## 12. DOCUMENTO Y DIAGRAMA SINCRONIZADOS
+
+Quiero poder revisar el procedimiento y su flujo en la misma pantalla.
+
+En escritorio, utilizar una visualización dividida cuando resulte cómodo.
+
+En pantallas pequeñas, utilizar pestañas.
+
+### Comportamiento
+
+Cuando modifico una actividad del flujo, debe actualizarse el modelo documental.
+
+Cuando corrijo el responsable desde el procedimiento, debe reflejarse en el diagrama.
+
+Si una modificación narrativa cambia el significado operativo, solicitar confirmación de la actualización estructural.
+
+Nunca regenerar todo el contenido borrando las correcciones previamente validadas.
+
+Utilizar identificadores estables para vincular actividades, decisiones y pasos documentales.
+
+---
+
+## 13. EXPORTACIÓN
+
+La primera versión debe poder generar archivos descargables reales.
+
+### Word
+
+Formato `.docx`.
+
+Documento editable, profesional y estructurado.
+
+Utilizar una biblioteca JavaScript adecuada, por ejemplo `docx` o una solución de plantillas DOCX compatible.
+
+Cuando exista una plantilla de cliente, utilizarla de acuerdo con los campos configurados.
+
+### PDF
+
+Generar un archivo `.pdf` real.
+
+No depender exclusivamente de abrir el diálogo de impresión del navegador.
+
+Utilizar una biblioteca compatible con Google AI Studio y Node.js.
+
+El PDF debe representar el mismo contenido aprobado que el Word.
+
+### draw.io
+
+Generar archivo `.drawio` editable.
+
+Cada actividad y conexión debe poder modificarse independientemente desde diagrams.net.
+
+### Descarga
+
+Permitir:
+
+- Word individual.
+- PDF individual.
+- Draw.io individual.
+- ZIP agrupado con los entregables seleccionados.
+
+Los archivos deben tener nombres consistentes.
+
+Si existen datos críticos sin validar, permitir únicamente una exportación marcada como borrador.
+
+Los documentos validados no deben contener marcas de borrador ni recomendaciones privadas.
+
+Si alguna característica avanzada de las plantillas no puede implementarse todavía, entregar una exportación estándar real, indicar la limitación y no mostrar funciones ficticias.
+
+---
+
+## 14. PERSISTENCIA Y CONTROL DE VERSIONES
+
+Guardar automáticamente:
+
+- Clientes.
+- Configuraciones.
+- Transcripciones.
+- Procesos.
+- Actividades.
+- Decisiones.
+- Respuestas de validación.
+- Documentos.
+- Hallazgos privados.
+- Versiones.
+
+No utilizar `localStorage` como única fuente de información.
+
+Los datos deben permanecer disponibles cuando cierre y vuelva a abrir la aplicación.
+
+### Versionado sencillo
+
+Permitir guardar versiones de cada proceso.
+
+Registrar:
+
+- Número.
+- Fecha.
+- Estado.
+- Cambios principales.
+
+No desarrollar un sistema documental empresarial complejo.
+
+Solo lo necesario para conservar y recuperar el trabajo.
+
+Evitar sobrescrituras accidentales de versiones validadas.
+
+---
+
+## 15. SEGURIDAD
+
+Aunque solo exista un usuario, implementar medidas básicas reales.
+
+- Inicio de sesión.
+- Protección de rutas.
+- Reglas de Firestore.
+- Restricción de acceso entre usuarios.
+- Almacenamiento privado.
+- API de Gemini exclusivamente desde backend.
+- Secretos de servidor.
+- Validación de archivos.
+- Límites de tamaño.
+- Manejo de errores.
+- Eliminación segura de archivos temporales.
+
+No publicar información confidencial.
+
+No almacenar transcripciones completas en logs.
+
+No desplegar públicamente una aplicación sin confirmar que su autenticación y sus reglas de acceso funcionan.
+
+No realizar un despliegue público automático sin autorización.
+
+---
+
+## 16. EJEMPLO FUNCIONAL OBLIGATORIO
+
+Utiliza el siguiente ejemplo sintético para comprobar la aplicación:
+
+**Reunión — Relevamiento de operaciones logísticas**
+
+Entrevistador:
+
+"Explicame cómo realizan la recepción de mercancías."
+
+Operario:
+
+"Cuando llega el camión, el administrativo revisa el albarán y comprueba que la matrícula corresponda con la reserva. Si está todo bien, le asignan el muelle de descarga. Después el carretillero descarga los palés y revisa si existe algún daño visible. Si encuentra daños, avisa al responsable del almacén y se registra una incidencia. Cuando termina, registra la recepción en SAP."
+
+Entrevistador:
+
+"¿Y cómo funciona la devolución de mercancías?"
+
+Operario:
+
+"Es diferente. Primero atención al cliente nos envía una solicitud de devolución. Almacén comprueba si la mercancía puede recibirse. Si se autoriza, se programa la llegada. Cuando llega el transporte, se descarga y se registra la devolución."
+
+Entrevistador:
+
+"¿Cómo se registra una recepción en SAP?"
+
+Operario:
+
+"Entramos a la transacción MIGO, seleccionamos el documento de referencia, introducimos las cantidades recibidas, verificamos los datos y contabilizamos."
+
+### Resultado esperado
+
+La IA debe proponer unidades documentales relacionadas con:
+
+1. Recepción de mercancías.
+2. Gestión de devoluciones.
+3. Instructivo de registro de recepción en SAP.
+
+Debe permitir modificar la clasificación de cada unidad.
+
+Debe identificar la relación entre el instructivo SAP y el procedimiento de recepción.
+
+Debe generar preguntas cuando exista información importante no especificada.
+
+Debe generar los diagramas correspondientes.
+
+Debe elaborar la documentación AS-IS.
+
+Debe permitir corregir actividades y responsables.
+
+Debe señalar las oportunidades de mejora en un apartado privado si encuentra evidencias suficientes.
+
+No debe inventar controles o tareas adicionales.
+
+Debe permitir exportar archivos válidos.
+
+---
+
+## 17. REGLAS DE CALIDAD
+
+No considero terminada una función porque su botón exista.
+
+Cada funcionalidad debe operar de verdad.
+
+Antes de darla por finalizada, comprobar:
+
+- Que la carga de archivos funciona.
+- Que Gemini recibe e interpreta la transcripción.
+- Que identifica varios procesos cuando corresponde.
+- Que no inventa información.
+- Que detecta lagunas.
+- Que las respuestas actualizan el modelo.
+- Que el diagrama representa correctamente las decisiones.
+- Que editar un paso conserva las relaciones.
+- Que el procedimiento corresponde al diagrama.
+- Que las mejoras no contaminan los documentos.
+- Que los datos persisten.
+- Que la exportación genera archivos reales y válidos.
+- Que los errores no destruyen trabajos anteriores.
+
+No simular funciones implementadas.
+
+No inventar resultados de pruebas.
+
+Si un servicio externo no puede verificarse, explicar qué falta por comprobar.
+
+---
+
+## 18. ORDEN DE DESARROLLO EN GOOGLE AI STUDIO
+
+Debes desarrollar la aplicación incrementalmente, conservando en todo momento una versión ejecutable.
+
+### Bloque A — Aplicación base
+
+Construir:
+
+- Interfaz.
+- Gestión de clientes.
+- Firebase.
+- Inicio de sesión.
+- Relevamientos.
+- Persistencia.
+
+### Bloque B — Motor Gemini
+
+Construir:
+
+- Carga de transcripción.
+- Audio a texto.
+- Análisis.
+- Identificación de múltiples procesos.
+- Clasificación.
+- Modelo estructurado.
+
+### Bloque C — Validación
+
+Construir:
+
+- Preguntas.
+- Detección de contradicciones.
+- Respuestas.
+- Actualización del modelo.
+- Estados de validación.
+
+### Bloque D — Documentación
+
+Construir:
+
+- Editor visual.
+- Diagrama automático.
+- Procedimiento escrito.
+- Sincronización.
+
+### Bloque E — Análisis privado
+
+Construir:
+
+- Puntos de dolor.
+- Hallazgos sugeridos.
+- Registro manual.
+- Separación de resultados.
+
+### Bloque F — Exportaciones
+
+Construir:
+
+- DOCX.
+- PDF.
+- DRAWIO.
+- ZIP.
+- Plantillas documentales.
+
+### Bloque G — Validación final
+
+Realizar pruebas de extremo a extremo.
+
+Corregir problemas funcionales.
+
+Revisar la interfaz.
+
+Documentar las limitaciones.
+
+En cada bloque, priorizar una implementación utilizable y estable antes de incorporar otras funciones.
+
+Si el entorno limita la implementación completa en una sola ejecución, conserva los bloques ya funcionales, informa con precisión qué queda pendiente y continúa sobre el mismo proyecto en posteriores iteraciones.
+
+No sustituyas funcionalidades reales por botones decorativos.
+
+---
+
+## 19. RESULTADO FINAL ESPERADO
+
+Quiero abrir Google AI Studio y visualizar una aplicación llamada Process AI.
+
+Su funcionamiento debe resultar evidente.
+
+Entro, selecciono un cliente, cargo una reunión y pulso **Analizar con IA**.
+
+Gemini identifica los procesos.
+
+Yo valido las divisiones y respondo las dudas relevantes.
+
+La aplicación genera el diagrama y el procedimiento de cada proceso.
+
+Puedo modificar el resultado.
+
+Puedo revisar por separado los puntos de dolor y las oportunidades de mejora.
+
+Finalmente, descargo los documentos profesionales.
+
+Todo debe quedar guardado para continuar trabajando posteriormente.
+
+No quiero configurar manualmente diagramas o copiar respuestas de la IA a Word.
+
+Quiero que la aplicación transforme realmente la conversación en documentación.
+
+---
+
+## 20. INSTRUCCIÓN FINAL PARA GOOGLE AI STUDIO
+
+**Comienza ahora a construir Process AI como una aplicación web full-stack nueva.**
+
+No importes el proyecto anterior.
+
+Utiliza las integraciones nativas de Google AI Studio, Gemini y Firebase.
+
+Toma decisiones técnicas razonables sin detener el desarrollo para consultar cuestiones menores.
+
+Construye una interfaz profesional, sencilla e intuitiva.
+
+Implementa primero el circuito fundamental:
+
+**Transcripción → Interpretación IA → Procesos identificados → Validación → Diagrama y procedimiento → Exportación.**
+
+Mantén el análisis de mejoras estrictamente separado de los documentos oficiales.
+
+Prioriza la calidad del motor de interpretación y la fidelidad del proceso sobre cualquier elemento decorativo.
+
+No agregues funcionalidades que no hayan sido solicitadas.
+
+No publiques la aplicación sin autorización.
+
+Ejecuta las comprobaciones que permita el entorno y comunica únicamente resultados verificados.
+
+**Quiero una primera versión real, funcional, sencilla y útil de Process AI, no una demostración visual.**

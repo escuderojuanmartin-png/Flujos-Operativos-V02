@@ -1,0 +1,74 @@
+{
+  "entities": {
+    "Client": {
+      "title": "Client",
+      "description": "Empresa cliente para documentación de procesos",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "name": { "type": "string", "maxLength": 200 },
+        "code": { "type": "string", "maxLength": 50 },
+        "sector": { "type": "string", "maxLength": 100 },
+        "isoStandard": { "type": "string", "maxLength": 50 },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "ownerId", "name", "code"]
+    },
+    "Survey": {
+      "title": "Survey",
+      "description": "Relevamiento de procesos y transcripción de reunión",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "clientId": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "title": { "type": "string", "maxLength": 250 },
+        "transcriptText": { "type": "string" },
+        "audioFileName": { "type": "string", "maxLength": 200 },
+        "status": { "type": "string", "enum": ["draft", "analyzed", "in_progress", "completed"] },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "clientId", "ownerId", "title", "transcriptText"]
+    },
+    "Process": {
+      "title": "Process",
+      "description": "Proceso, procedimiento o instructivo documental estructurado",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "surveyId": { "type": "string" },
+        "clientId": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "name": { "type": "string", "maxLength": 250 },
+        "code": { "type": "string", "maxLength": 50 },
+        "docType": { "type": "string", "enum": ["proceso", "procedimiento", "instructivo"] },
+        "status": { "type": "string", "enum": ["borrador", "pendiente_informacion", "en_revision", "validado"] },
+        "version": { "type": "string", "maxLength": 20 },
+        "objective": { "type": "string" },
+        "scope": { "type": "string" },
+        "trigger": { "type": "string" },
+        "result": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "surveyId", "clientId", "ownerId", "name", "docType", "status"]
+    }
+  },
+  "firestore": {
+    "/clients/{clientId}": {
+      "schema": "Client",
+      "description": "Colección de clientes"
+    },
+    "/surveys/{surveyId}": {
+      "schema": "Survey",
+      "description": "Colección de relevamientos y transcripciones"
+    },
+    "/processes/{processId}": {
+      "schema": "Process",
+      "description": "Colección de procesos, procedimientos e instructivos"
+    }
+  }
+}

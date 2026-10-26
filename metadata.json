@@ -1,0 +1,6 @@
+{
+  "name": "Process AI",
+  "description": "Documentación y diagramación inteligente de procesos empresariales bajo buenas prácticas ISO 9001 a partir de transcripciones y audio.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
