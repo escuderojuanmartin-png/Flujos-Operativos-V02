@@ -131,12 +131,18 @@ export const ExportView: React.FC<Props> = ({ processes, client }) => {
         <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
         <div className="text-xs text-emerald-900 leading-relaxed">
           <strong className="font-bold block text-sm mb-0.5 text-emerald-950">
-            Garantía de Conformidad ISO 9001:2026 y Separación de Confidencialidad
+            Documento estructurado con buenas prácticas de control de información documentada
           </strong>
           Los archivos exportados contienen exclusivamente los datos del procedimiento operativo AS-IS
-          aprobado ({activeProcess.activities.length} actividades documentadas).
+          aprobado ({activeProcess.activities.length} actividades documentadas), tomando la norma ISO 9001:2026
+          como marco de referencia técnico.
           Cualquier oportunidad privada o punto de dolor ha sido físicamente filtrado para no figurar en
           los entregables oficiales de la empresa.
+          {client?.templateFileName && (
+            <span className="block mt-1 font-semibold text-emerald-800">
+              Plantilla asociada: {client.templateFileName}
+            </span>
+          )}
         </div>
       </div>
 

@@ -12,6 +12,7 @@ import {
   ConnectionLineType,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import dagre from 'dagre';
 import { ProcessModel, ProcessActivity } from '../types/process';
 import { Play, CheckCircle2, HelpCircle, Layers, AlertTriangle } from 'lucide-react';
 
@@ -24,18 +25,18 @@ interface Props {
 // Custom Node for Start Step
 const StartNode = ({ data, selected }: any) => (
   <div
-    className={`px-4 py-3 rounded-full bg-emerald-50 border-2 transition-all shadow-xs flex items-center gap-2 cursor-pointer ${
-      selected ? 'border-emerald-600 ring-2 ring-emerald-300' : 'border-emerald-400'
+    className={`px-4 py-3 rounded-full bg-emerald-50 border-2 transition-all shadow-xs flex items-center gap-2 cursor-pointer w-[250px] ${
+      selected ? 'border-emerald-600 ring-2 ring-emerald-300 shadow-md' : 'border-emerald-400 hover:border-emerald-500'
     }`}
   >
     <div className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0">
       <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
     </div>
-    <div className="text-left">
-      <div className="text-[10px] font-bold text-emerald-700 tracking-wider uppercase">Inicio</div>
-      <div className="text-xs font-semibold text-emerald-950 line-clamp-1">{data.label}</div>
+    <div className="text-left overflow-hidden">
+      <div className="text-[10px] font-bold text-emerald-700 tracking-wider uppercase">Inicio del Proceso</div>
+      <div className="text-xs font-bold text-emerald-950 truncate">{data.label}</div>
     </div>
-    <Handle type="source" position={Position.Bottom} className="w-2.5 h-2.5 bg-emerald-600" />
+    <Handle type="source" position={Position.Bottom} id="bottom" className="w-3 h-3 bg-emerald-600 border-2 border-white rounded-full" />
   </div>
 );
 
@@ -45,13 +46,16 @@ const ActionNode = ({ data, selected }: any) => {
 
   return (
     <div
-      className={`w-64 rounded-lg bg-white border transition-all shadow-xs cursor-pointer overflow-hidden ${
+      className={`w-[280px] rounded-lg bg-white border transition-all shadow-xs cursor-pointer overflow-hidden ${
         selected
           ? 'border-blue-600 ring-2 ring-blue-200 shadow-md'
           : 'border-slate-300 hover:border-slate-400'
       }`}
     >
-      <Handle type="target" position={Position.Top} className="w-2.5 h-2.5 bg-slate-500" />
+      <Handle type="target" position={Position.Top} id="top" className="w-3 h-3 bg-slate-500 border-2 border-white rounded-full" />
+      <Handle type="target" position={Position.Left} id="left" className="w-3 h-3 bg-blue-500 border-2 border-white rounded-full" />
+      <Handle type="target" position={Position.Right} id="right" className="w-3 h-3 bg-blue-500 border-2 border-white rounded-full" />
+
       <div className="bg-slate-50 border-b border-slate-200 px-3 py-1.5 flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <span className="w-5 h-5 rounded-full bg-slate-200 text-slate-800 text-[11px] font-bold flex items-center justify-center">
@@ -60,7 +64,7 @@ const ActionNode = ({ data, selected }: any) => {
           <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Actividad</span>
         </div>
         {data.system && (
-          <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-700 font-mono">
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200/80 text-slate-700 font-mono truncate max-w-[110px]">
             {data.system}
           </span>
         )}
@@ -70,7 +74,7 @@ const ActionNode = ({ data, selected }: any) => {
         <div className="text-xs font-bold text-slate-900 leading-snug line-clamp-2">{data.label}</div>
         <div className="mt-2 flex items-center justify-between gap-1">
           <span
-            className={`text-[11px] px-2 py-0.5 rounded font-medium truncate max-w-[170px] ${
+            className={`text-[11px] px-2 py-0.5 rounded font-medium truncate max-w-[220px] ${
               isPendingRole
                 ? 'bg-rose-100 text-rose-700 font-semibold'
                 : 'bg-blue-50 text-blue-700 border border-blue-200/50'
@@ -86,47 +90,64 @@ const ActionNode = ({ data, selected }: any) => {
           </div>
         )}
       </div>
-      <Handle type="source" position={Position.Bottom} className="w-2.5 h-2.5 bg-blue-600" />
+
+      <Handle type="source" position={Position.Bottom} id="bottom" className="w-3 h-3 bg-blue-600 border-2 border-white rounded-full" />
     </div>
   );
 };
 
-// Custom Node for Decision Step
+// Custom Node for Decision Step with Multiple Branching Ports
 const DecisionNode = ({ data, selected }: any) => (
   <div
-    className={`w-60 rounded-xl bg-amber-50/90 border-2 transition-all shadow-xs cursor-pointer p-3 text-left ${
+    className={`w-[280px] rounded-xl bg-amber-50/95 border-2 transition-all shadow-xs cursor-pointer p-3.5 text-left relative ${
       selected
         ? 'border-amber-600 ring-2 ring-amber-200 shadow-md'
         : 'border-amber-400 hover:border-amber-500'
     }`}
   >
-    <Handle type="target" position={Position.Top} className="w-2.5 h-2.5 bg-amber-600" />
+    <Handle type="target" position={Position.Top} id="top" className="w-3 h-3 bg-amber-600 border-2 border-white rounded-full" />
+
     <div className="flex items-center gap-1.5 text-amber-800 text-[10px] font-bold uppercase tracking-wider mb-1">
       <HelpCircle className="w-3.5 h-3.5" />
       <span>Decisión / Control</span>
     </div>
     <div className="text-xs font-bold text-slate-900 leading-snug">{data.label}</div>
-    <div className="mt-2 text-[11px] font-medium text-amber-900 bg-amber-100/70 px-2 py-0.5 rounded inline-block">
-      {data.role}
+
+    <div className="mt-2 flex items-center justify-between gap-1">
+      <span className="text-[11px] font-semibold text-amber-950 bg-amber-200/70 px-2 py-0.5 rounded truncate max-w-[170px]">
+        {data.role}
+      </span>
+      {data.system && (
+        <span className="text-[10px] text-amber-800 font-mono bg-white/70 px-1.5 py-0.5 rounded border border-amber-200 truncate max-w-[90px]">
+          {data.system}
+        </span>
+      )}
     </div>
-    <Handle type="source" position={Position.Bottom} id="main" className="w-2.5 h-2.5 bg-amber-600" />
+
+    {/* Outgoing port: Bottom (Principal / Conforme / Aceptada) */}
+    <Handle type="source" position={Position.Bottom} id="bottom" className="w-3 h-3 bg-emerald-600 border-2 border-white rounded-full" />
+    {/* Outgoing port: Right (Alternativa / Posponer / Rechazada) */}
+    <Handle type="source" position={Position.Right} id="right" className="w-3 h-3 bg-rose-500 border-2 border-white rounded-full" />
+    {/* Outgoing port: Left (Loopback / Reproceso) */}
+    <Handle type="source" position={Position.Left} id="left" className="w-3 h-3 bg-amber-600 border-2 border-white rounded-full" />
   </div>
 );
 
 // Custom Node for End Step
 const EndNode = ({ data, selected }: any) => (
   <div
-    className={`px-4 py-3 rounded-full bg-slate-100 border-2 transition-all shadow-xs flex items-center gap-2 cursor-pointer ${
-      selected ? 'border-slate-800 ring-2 ring-slate-300' : 'border-slate-400'
+    className={`px-4 py-3 rounded-full bg-slate-100 border-2 transition-all shadow-xs flex items-center gap-2 cursor-pointer w-[250px] ${
+      selected ? 'border-slate-800 ring-2 ring-slate-300 shadow-md' : 'border-slate-400 hover:border-slate-500'
     }`}
   >
-    <Handle type="target" position={Position.Top} className="w-2.5 h-2.5 bg-slate-600" />
+    <Handle type="target" position={Position.Top} id="top" className="w-3 h-3 bg-slate-600 border-2 border-white rounded-full" />
+    <Handle type="target" position={Position.Left} id="left" className="w-3 h-3 bg-slate-600 border-2 border-white rounded-full" />
     <div className="w-6 h-6 rounded-full bg-slate-700 text-white flex items-center justify-center shrink-0">
       <CheckCircle2 className="w-3.5 h-3.5" />
     </div>
-    <div className="text-left">
-      <div className="text-[10px] font-bold text-slate-600 tracking-wider uppercase">Fin</div>
-      <div className="text-xs font-semibold text-slate-900 line-clamp-1">{data.label}</div>
+    <div className="text-left overflow-hidden">
+      <div className="text-[10px] font-bold text-slate-600 tracking-wider uppercase">Fin del Proceso</div>
+      <div className="text-xs font-bold text-slate-900 truncate">{data.label}</div>
     </div>
   </div>
 );
@@ -138,34 +159,75 @@ const nodeTypes = {
   endNode: EndNode,
 };
 
+// Node Dimensions for Dagre Auto-layout
+const NODE_DIMENSIONS: Record<string, { width: number; height: number }> = {
+  startNode: { width: 250, height: 70 },
+  actionNode: { width: 280, height: 115 },
+  decisionNode: { width: 280, height: 125 },
+  endNode: { width: 250, height: 70 },
+};
+
 export const ProcessFlowDiagram: React.FC<Props> = ({ process, selectedActivityId, onSelectActivity }) => {
-  // Generate nodes with automatic vertical layout
-  const nodes: Node[] = useMemo(() => {
-    let currentY = 40;
-    const centerX = 260;
+  // Compute full Dagre hierarchical layout with lateral branches and proper routing
+  const { nodes, edges } = useMemo(() => {
+    const actMap = new Map<string, ProcessActivity>();
+    process.activities.forEach((a) => actMap.set(a.id, a));
 
-    return process.activities.map((act) => {
+    // 1. Prepare raw edges
+    const validConns = (process.connections || []).filter(
+      (c) => c && c.from && c.to && actMap.has(c.from) && actMap.has(c.to)
+    );
+
+    // 2. Setup Dagre Graph
+    const dagreGraph = new dagre.graphlib.Graph();
+    dagreGraph.setDefaultEdgeLabel(() => ({}));
+    dagreGraph.setGraph({
+      rankdir: 'TB',
+      nodesep: 90, // Lateral separation between branches
+      ranksep: 75, // Vertical spacing between ranks
+      align: 'DL',
+      ranker: 'network-simplex',
+    });
+
+    // 3. Add nodes to Dagre
+    process.activities.forEach((act) => {
       let type = 'actionNode';
-      let nodeHeight = 110;
+      if (act.type === 'start') type = 'startNode';
+      else if (act.type === 'end') type = 'endNode';
+      else if (act.type === 'decision') type = 'decisionNode';
 
-      if (act.type === 'start') {
-        type = 'startNode';
-        nodeHeight = 70;
-      } else if (act.type === 'end') {
-        type = 'endNode';
-        nodeHeight = 70;
-      } else if (act.type === 'decision') {
-        type = 'decisionNode';
-        nodeHeight = 120;
+      const dims = NODE_DIMENSIONS[type] || { width: 280, height: 115 };
+      dagreGraph.setNode(act.id, { width: dims.width, height: dims.height });
+    });
+
+    // 4. Add edges to Dagre (ignore self loops or backwards edges in dagre to prevent cycles)
+    validConns.forEach((c) => {
+      const fromAct = actMap.get(c.from);
+      const toAct = actMap.get(c.to);
+      const isLoopback = fromAct && toAct && fromAct.stepNumber >= toAct.stepNumber;
+      if (!isLoopback) {
+        dagreGraph.setEdge(c.from, c.to);
       }
+    });
 
-      const y = currentY;
-      currentY += nodeHeight + 45;
+    dagre.layout(dagreGraph);
+
+    // 5. Generate ReactFlow nodes with calculated positions
+    const layoutedNodes: Node[] = process.activities.map((act) => {
+      let type = 'actionNode';
+      if (act.type === 'start') type = 'startNode';
+      else if (act.type === 'end') type = 'endNode';
+      else if (act.type === 'decision') type = 'decisionNode';
+
+      const dims = NODE_DIMENSIONS[type] || { width: 280, height: 115 };
+      const nodePos = dagreGraph.node(act.id);
+      const x = nodePos ? nodePos.x - dims.width / 2 : 100;
+      const y = nodePos ? nodePos.y - dims.height / 2 : 100;
 
       return {
         id: act.id,
         type,
-        position: { x: centerX - 120, y },
+        position: { x, y },
         selected: selectedActivityId === act.id,
         data: {
           label: act.name,
@@ -177,50 +239,97 @@ export const ProcessFlowDiagram: React.FC<Props> = ({ process, selectedActivityI
         },
       };
     });
-  }, [process.activities, selectedActivityId]);
 
-  // Generate edges from connections
-  const edges: Edge[] = useMemo(() => {
-    const actIdSet = new Set((process.activities || []).map((a) => a.id));
-    const validConns = (process.connections || []).filter(
-      (c) => c && c.from && c.to && actIdSet.has(c.from) && actIdSet.has(c.to)
-    );
+    // 6. Generate ReactFlow edges with intelligent port assignment and pill badges
+    const layoutedEdges: Edge[] = validConns.map((c, idx) => {
+      const fromAct = actMap.get(c.from);
+      const toAct = actMap.get(c.to);
 
-    if (validConns.length > 0) {
-      return validConns.map((c, idx) => ({
+      const labelText = (c.label || '').trim();
+      const lowerLabel = labelText.toLowerCase();
+
+      const isNegative =
+        lowerLabel.includes('posponer') ||
+        lowerLabel.includes('pospuesta') ||
+        lowerLabel.includes('no') ||
+        lowerLabel.includes('rechaz') ||
+        lowerLabel.includes('anomal');
+
+      const isPositive =
+        lowerLabel.includes('aceptad') ||
+        lowerLabel.includes('conforme') ||
+        lowerLabel.includes('sí') ||
+        lowerLabel.includes('si') ||
+        lowerLabel.includes('aprob');
+
+      const isFromDecision = fromAct?.type === 'decision';
+      const isLoopback = fromAct && toAct && fromAct.stepNumber >= toAct.stepNumber;
+
+      // Smart Port Selection:
+      // Decision nodes route negative/alternative branches out the RIGHT handle!
+      let sourceHandle = 'bottom';
+      let targetHandle = 'top';
+
+      if (isFromDecision) {
+        if (isNegative) {
+          sourceHandle = 'right';
+        } else if (isPositive) {
+          sourceHandle = 'bottom';
+        }
+      }
+
+      if (isLoopback) {
+        sourceHandle = 'left';
+        targetHandle = 'left';
+      }
+
+      const strokeColor = isNegative
+        ? '#e11d48'
+        : isPositive
+        ? '#059669'
+        : isLoopback
+        ? '#d97706'
+        : '#475569';
+
+      return {
         id: `e_${c.from}_${c.to}_${idx}`,
         source: c.from,
         target: c.to,
-        label: c.label || undefined,
-        type: ConnectionLineType.SmoothStep,
-        animated: false,
-        style: { stroke: '#475569', strokeWidth: 2 },
-        labelStyle: { fill: '#1e293b', fontWeight: 600, fontSize: 11 },
-        labelBgStyle: { fill: '#f8fafc', fillOpacity: 0.95 },
+        sourceHandle,
+        targetHandle,
+        label: labelText || undefined,
+        type: isLoopback ? ConnectionLineType.SmoothStep : ConnectionLineType.SmoothStep,
+        animated: isLoopback,
+        style: {
+          stroke: strokeColor,
+          strokeWidth: isNegative || isPositive ? 2.5 : 2,
+          strokeDasharray: isLoopback ? '5 5' : undefined,
+        },
+        labelStyle: {
+          fill: isNegative ? '#9f1239' : isPositive ? '#065f46' : '#1e293b',
+          fontWeight: 700,
+          fontSize: 11,
+        },
+        labelBgStyle: {
+          fill: '#ffffff',
+          fillOpacity: 0.98,
+          stroke: isNegative ? '#f43f5e' : isPositive ? '#10b981' : '#cbd5e1',
+          strokeWidth: 1.5,
+          rx: 6,
+          ry: 6,
+        },
+        labelBgPadding: [8, 4] as [number, number],
         markerEnd: {
           type: MarkerType.ArrowClosed,
-          color: '#475569',
+          color: strokeColor,
+          width: 18,
+          height: 18,
         },
-      }));
-    }
+      };
+    });
 
-    // Default linear chain if connections empty or invalid
-    const seqEdges: Edge[] = [];
-    for (let i = 0; i < (process.activities || []).length - 1; i++) {
-      seqEdges.push({
-        id: `e_seq_${i}`,
-        source: process.activities[i].id,
-        target: process.activities[i + 1].id,
-        type: ConnectionLineType.SmoothStep,
-        style: { stroke: '#64748b', strokeWidth: 2 },
-        markerEnd: {
-          type: MarkerType.ArrowClosed,
-          color: '#64748b',
-        },
-      });
-    }
-    return seqEdges;
-  }, [process.connections, process.activities]);
+    return { nodes: layoutedNodes, edges: layoutedEdges };
+  }, [process.activities, process.connections, selectedActivityId]);
 
   const onNodeClick = useCallback(
     (_: any, node: Node) => {
@@ -237,16 +346,16 @@ export const ProcessFlowDiagram: React.FC<Props> = ({ process, selectedActivityI
         nodeTypes={nodeTypes}
         onNodeClick={onNodeClick}
         fitView
-        fitViewOptions={{ padding: 0.2 }}
-        minZoom={0.3}
+        fitViewOptions={{ padding: 0.25 }}
+        minZoom={0.2}
         maxZoom={1.5}
       >
-        <Background color="#cbd5e1" gap={20} size={1} />
+        <Background color="#cbd5e1" gap={22} size={1} />
         <Controls className="bg-white border border-slate-200 shadow-xs rounded-md" />
         <MiniMap
           nodeColor={(n) => {
             if (n.type === 'startNode') return '#10b981';
-            if (n.type === 'endNode') return '#ef4444';
+            if (n.type === 'endNode') return '#64748b';
             if (n.type === 'decisionNode') return '#f59e0b';
             return '#3b82f6';
           }}
@@ -256,7 +365,7 @@ export const ProcessFlowDiagram: React.FC<Props> = ({ process, selectedActivityI
 
       {/* Floating Diagram Legend */}
       <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-xs border border-slate-200 px-3 py-2 rounded-md shadow-xs text-[11px] text-slate-600 flex items-center gap-3 pointer-events-none">
-        <span className="font-semibold text-slate-800">Simbología:</span>
+        <span className="font-semibold text-slate-800">Simbología AS-IS:</span>
         <span className="flex items-center gap-1">
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" /> Inicio
         </span>
@@ -264,10 +373,16 @@ export const ProcessFlowDiagram: React.FC<Props> = ({ process, selectedActivityI
           <span className="w-2.5 h-2.5 rounded-xs bg-blue-500 inline-block" /> Actividad
         </span>
         <span className="flex items-center gap-1">
-          <span className="w-2.5 h-2.5 rotate-45 bg-amber-500 inline-block" /> Decisión
+          <span className="w-2.5 h-2.5 rounded-xs bg-amber-500 inline-block" /> Decisión / Control
         </span>
         <span className="flex items-center gap-1">
           <span className="w-2.5 h-2.5 rounded-full bg-slate-700 inline-block" /> Fin
+        </span>
+        <span className="flex items-center gap-1 pl-2 border-l border-slate-200 text-emerald-700 font-bold">
+          ✔ Aceptada
+        </span>
+        <span className="flex items-center gap-1 text-rose-600 font-bold">
+          ✖ Pospuesta
         </span>
       </div>
     </div>

@@ -1,0 +1,1655 @@
+# PROCESS AI V02 — AUDITORÍA, CORRECCIÓN Y REDISEÑO PROFESIONAL
+
+## 1. MISIÓN Y CONTEXTO
+
+Actúa como un equipo senior multidisciplinar integrado por:
+
+- Arquitecto de software full-stack.
+- Ingeniero senior especialista en React, TypeScript y Node.js.
+- Especialista en Gemini y sistemas de inteligencia artificial aplicada.
+- Ingeniero industrial especializado en modelado de procesos empresariales.
+- Consultor de calidad y gestión de información documentada ISO 9001.
+- Especialista en arquitectura Firebase y seguridad.
+- Diseñador senior UX/UI.
+- Ingeniero de pruebas y aseguramiento de calidad.
+
+Tu objetivo es **revisar, corregir, simplificar y evolucionar la aplicación Process AI V02 que ya existe en este proyecto**.
+
+NO debes empezar de cero.
+
+NO debes crear una tercera aplicación independiente.
+
+NO debes sustituir el código existente por una demostración simplificada.
+
+Debes utilizar la implementación actual como punto de partida, conservando las funcionalidades correctas y refactorizando lo necesario.
+
+### Repositorio de referencia
+
+https://github.com/escuderojuanmartin-png/Flujos-Operativos-V02
+
+La revisión externa inicial se realizó sobre la rama `main`, commit `4a157d99d6a28ceeb78e7f9f9d858ac32630a12d`.
+
+Comprueba el estado actual del proyecto antes de aplicar cambios, porque puede haber evolucionado desde ese commit.
+
+### Visión del producto
+
+Process AI busca convertirse en una herramienta profesional que permita transformar reuniones de relevamiento empresarial en:
+
+1. Modelos de procesos estructurados.
+2. Diagramas de flujo profesionales.
+3. Procedimientos e instructivos redactados.
+4. Documentación Word y PDF de calidad empresarial.
+5. Archivos draw.io editables.
+6. Registros privados de puntos de dolor y oportunidades de mejora.
+
+Inicialmente habrá un único usuario, pero la aplicación debe poder evolucionar a una solución comercial para organizaciones.
+
+La prioridad no es añadir funciones. Es lograr que la aplicación actual sea fiable, fácil de utilizar y profesional.
+
+---
+
+# 2. CONCLUSIONES DE LA AUDITORÍA EXTERNA
+
+Se han detectado varios problemas importantes mediante inspección estática del código.
+
+Debes verificarlos y corregirlos.
+
+No consideres que un problema está resuelto porque exista una función con el nombre correspondiente.
+
+## 2.1. Persistencia incompleta y riesgo de pérdida de información
+
+Archivos principales:
+
+- `src/App.tsx`
+- `src/components/SurveyView.tsx`
+- `src/lib/firebase.ts`
+
+### Situación detectada
+
+La aplicación utiliza Firestore, pero no completa el circuito de persistencia.
+
+En `App.tsx`, el inicio de sesión carga principalmente los clientes.
+
+Los procesos y relevamientos no se recuperan completamente desde Firestore al iniciar la aplicación.
+
+Además, `handleAnalysisComplete()` sustituye el array de procesos en memoria con `setProcesses(newProcesses)`.
+
+Esto puede provocar que un nuevo análisis reemplace el trabajo anterior en pantalla.
+
+En otras funciones, se llama a `setDoc()` sin esperar su resultado mediante `await`.
+
+El bloque `try/catch` no garantiza la captura de errores de escritura asíncronos.
+
+### Corrección requerida
+
+Diseñar un flujo de persistencia completo:
+
+- Crear clientes.
+- Crear relevamientos.
+- Guardar transcripciones.
+- Guardar resultados del análisis.
+- Guardar unidades documentales identificadas.
+- Guardar correcciones.
+- Guardar respuestas de validación.
+- Guardar oportunidades de mejora.
+- Recuperar el trabajo al reabrir la aplicación.
+- Gestionar estados de carga y error.
+- Evitar sobrescrituras accidentales.
+
+Los procesos identificados deben incorporarse al cliente y relevamiento correspondientes, no sustituir indiscriminadamente todos los procesos de la aplicación.
+
+Implementar operaciones de guardado que esperen la respuesta de Firestore y gestionen sus errores.
+
+Usar `serverTimestamp` cuando corresponda.
+
+Evitar escrituras innecesarias a Firestore por cada pulsación de teclado mediante edición local, guardado controlado o debounce seguro.
+
+Incluir señales claras de estado:
+
+- Guardando.
+- Guardado.
+- Error al guardar.
+- Cambios sin sincronizar.
+
+No afirmar que una modificación está guardada hasta obtener confirmación real de persistencia.
+
+### Criterio de aceptación
+
+Crear dos clientes, tres reuniones y varios procesos.
+
+Cerrar completamente la aplicación.
+
+Volver a entrar.
+
+Comprobar que toda la información, incluidos los cambios, continúa disponible y correctamente relacionada.
+
+---
+
+## 2.2. Autenticación y seguridad del backend
+
+Archivo principal:
+
+`server.ts`
+
+### Situación detectada
+
+Los endpoints:
+
+- `/api/gemini/transcribe-audio`
+- `/api/gemini/analyze-interview`
+- `/api/gemini/update-process-with-answers`
+
+no verifican actualmente la identidad del solicitante mediante un token de Firebase.
+
+El hecho de utilizar Firebase Authentication en React no protege automáticamente estos endpoints.
+
+### Corrección requerida
+
+Implementar middleware de autenticación del servidor.
+
+Verificar tokens Firebase ID mediante Firebase Admin SDK u otro mecanismo adecuado para el entorno.
+
+Rechazar solicitudes no autenticadas.
+
+Inicialmente permitir acceso únicamente al usuario autorizado mediante una lista de acceso configurable o mecanismo equivalente.
+
+Aplicar:
+
+- Autorización por usuario.
+- Validación de solicitudes.
+- Límites de tamaño.
+- Rate limiting.
+- Controles de consumo de Gemini.
+- Tratamiento seguro de errores.
+- Protección de claves API.
+- Restricción de origen cuando corresponda.
+
+No confiar en identificadores `ownerId` enviados desde el frontend.
+
+La identidad del usuario debe obtenerse del token validado.
+
+No devolver errores internos completos del proveedor al navegador si contienen información sensible.
+
+El servidor debe tratar el contenido de las transcripciones como datos no confiables: una instrucción incluida dentro de una reunión no puede modificar las reglas del sistema ni solicitar acciones ajenas al análisis documental.
+
+### Criterio de aceptación
+
+Una petición directa sin autenticación debe devolver HTTP 401.
+
+Una petición autenticada sin autorización debe devolver HTTP 403.
+
+Una petición autorizada debe funcionar normalmente.
+
+No exponer contenido sensible ni permitir uso gratuito e ilimitado de Gemini por terceros.
+
+---
+
+## 2.3. Información ficticia dentro de procesos reales
+
+Archivos principales:
+
+- `src/components/SurveyView.tsx`
+- `src/components/ProcessFlowDiagram.tsx`
+- `src/lib/exportDrawio.ts`
+- `src/lib/exportDocx.ts`
+- `src/lib/exportPdf.ts`
+
+### Situación detectada
+
+En `SurveyView.tsx`, cuando el análisis no contiene actividades, la aplicación puede crear automáticamente una secuencia genérica de inicio, ejecución y fin.
+
+Cuando no existen conexiones, también puede generar una cadena secuencial entre actividades.
+
+Los visualizadores y exportadores contienen comportamientos similares.
+
+Los documentos incorporan además textos genéricos para ciertos campos desconocidos.
+
+### Problema de ingeniería de procesos
+
+No es aceptable interpretar la ausencia de información como autorización para inventar actividades, responsabilidades, conexiones, controles o resultados.
+
+Por ejemplo, si una transcripción describe cinco actividades, pero no explica qué ocurre después de una decisión, la aplicación no puede conectar automáticamente esa decisión con la actividad siguiente.
+
+Eso puede cambiar por completo el funcionamiento del proceso.
+
+### Corrección requerida
+
+Eliminar todos los mecanismos que inventen información operativa.
+
+Diferenciar entre:
+
+- Dato explícito en la transcripción.
+- Dato confirmado por el usuario.
+- Dato inferido que requiere validación.
+- Dato desconocido.
+- Propuesta de mejora privada.
+
+Cuando falten conexiones o actividades:
+
+1. Identificar la inconsistencia.
+2. Generar preguntas.
+3. Mantener el estado pendiente.
+4. Evitar exportar una secuencia inventada como proceso validado.
+
+La aplicación puede representar visualmente un inicio o fin de diagrama como convención gráfica, pero no puede añadir pasos operativos ni resultados no confirmados.
+
+Los campos desconocidos deberán permanecer como pendientes.
+
+### Criterio de aceptación
+
+Si la IA devuelve actividades sin conexiones suficientes, el sistema debe conservar la información conocida, señalar las conexiones pendientes y solicitar validación.
+
+No debe generar un flujo secuencial ficticio.
+
+---
+
+# 3. REDISEÑO DEL NÚCLEO DE INGENIERÍA DE PROCESOS
+
+Este es el apartado más importante del rediseño.
+
+## 3.1. Un único modelo estructurado como fuente de verdad
+
+La aplicación ya dispone de `ProcessModel` en:
+
+`src/types/process.ts`
+
+Conservar esta aproximación, pero mejorarla.
+
+El modelo debe representar la realidad operativa independientemente de cómo se visualice o exporte.
+
+El procedimiento y el diagrama no deben contener estructuras paralelas e independientes que puedan contradecirse.
+
+### Evolución del modelo
+
+Cada proceso debe contener como mínimo:
+
+**Identificación**
+
+- ID único estable.
+- Cliente.
+- Relevamiento origen.
+- Nombre.
+- Código documental.
+- Tipo documental.
+- Versión.
+- Estado.
+
+**Definición**
+
+- Objetivo.
+- Alcance.
+- Límites.
+- Evento disparador.
+- Resultado final.
+- Entradas.
+- Salidas.
+- Roles.
+- Sistemas.
+- Documentos relacionados.
+
+**Modelo operativo**
+
+- Actividades.
+- Decisiones.
+- Conexiones.
+- Excepciones.
+- Dependencias.
+- Subprocesos relacionados.
+
+**Validación**
+
+- Preguntas.
+- Contradicciones.
+- Evidencias.
+- Respuestas.
+- Estado de confirmación.
+
+**Gestión**
+
+- Fechas.
+- Autor.
+- Revisiones.
+- Versiones.
+
+**Análisis privado**
+
+- Hallazgos.
+- Oportunidades.
+- Hipótesis.
+- Evidencias.
+
+Los hallazgos privados deben tener un almacenamiento lógico independiente o una separación estricta verificable, no depender de ocultarlos visualmente.
+
+---
+
+## 3.2. Trazabilidad completa
+
+Actualmente se recoge una cita original en algunas preguntas de validación, pero no existe una trazabilidad completa por actividad.
+
+### Nueva funcionalidad
+
+Cada actividad, condición importante o decisión debe estar vinculada a su fuente.
+
+Por ejemplo:
+
+**Actividad:** Verificar albarán.
+
+**Responsable:** Administrativo.
+
+**Fuente:** Entrevista de recepción.
+
+**Evidencia:** "Cuando llega el camión, el administrativo revisa el albarán".
+
+**Origen del dato:** Transcripción original.
+
+**Estado:** Confirmado en fuente.
+
+Si el usuario modifica la actividad, registrar que existe una corrección humana.
+
+Para cada campo relevante, utilizar referencias a fragmentos originales, identificadores y, cuando exista, el minuto del audio.
+
+Las citas deben verificarse contra la transcripción antes de guardarse como evidencia literal.
+
+No presentar citas inventadas.
+
+### Experiencia de usuario
+
+No mostrar toda esta información permanentemente.
+
+Cuando selecciono una actividad, quiero disponer de una acción sencilla:
+
+**Ver origen en la transcripción.**
+
+La aplicación debe mostrar el fragmento que justifica ese paso.
+
+Esto aporta trazabilidad y permite validar rápidamente la interpretación de la IA.
+
+---
+
+## 3.3. Detección inteligente de varios procesos
+
+La aplicación ya permite identificar múltiples unidades documentales.
+
+Mejorar la lógica para diferenciar:
+
+- Un proceso principal.
+- Un procedimiento.
+- Un instructivo.
+- Un subproceso.
+- Una excepción que pertenece al proceso principal.
+
+No convertir cualquier excepción en un proceso independiente.
+
+### Ejemplo
+
+Una reunión explica:
+
+- Recepción de mercancías.
+- Registro de recepción en SAP.
+- Gestión de incidencias.
+- Devolución de mercancías.
+
+La IA deberá identificar las unidades documentales apropiadas y sus relaciones.
+
+Puede proponer que el registro en SAP sea un instructivo vinculado a recepción.
+
+Puede proponer que las incidencias formen parte del procedimiento o constituyan otro procedimiento, explicando los motivos.
+
+### Funcionalidades requeridas
+
+- Renombrar una unidad.
+- Cambiar clasificación.
+- Fusionar unidades.
+- Separar unidades.
+- Descartar una unidad.
+- Identificar dependencias.
+- Aceptar o rechazar subdivisiones.
+
+El usuario siempre toma la decisión final.
+
+---
+
+## 3.4. Diferenciar adecuadamente proceso, procedimiento e instructivo
+
+Actualmente la estructura documental está demasiado centrada en una tabla única de actividades.
+
+Esto no siempre representa correctamente los tres tipos documentales.
+
+### Proceso
+
+Priorizar:
+
+- Objetivo.
+- Alcance.
+- Entradas.
+- Salidas.
+- Clientes internos o externos, cuando consten.
+- Interacciones.
+- Roles.
+- Actividades principales.
+- Diagrama.
+- Controles existentes.
+
+### Procedimiento
+
+Priorizar:
+
+- Objetivo.
+- Alcance.
+- Responsabilidades.
+- Requisitos previos.
+- Secuencia operativa detallada.
+- Decisiones.
+- Tratamiento de excepciones.
+- Registros.
+- Diagrama.
+
+### Instructivo
+
+Priorizar:
+
+- Tarea concreta.
+- Responsable.
+- Herramientas o sistema.
+- Requisitos previos.
+- Pasos detallados.
+- Campos o acciones específicas.
+- Validaciones conocidas.
+- Resultado de la tarea.
+
+No obligar a introducir el mismo nivel de detalle en todos los tipos.
+
+Las secciones serán configurables por cliente.
+
+No crear documentos incompletos artificialmente para rellenar una plantilla.
+
+---
+
+# 4. RECONSTRUCCIÓN DE LA VALIDACIÓN
+
+Archivos principales:
+
+- `src/components/ValidationView.tsx`
+- `server.ts`
+- `src/App.tsx`
+
+## 4.1. Bloquear validaciones incorrectas
+
+Actualmente el botón "Confirmar Validación Oficial" puede marcar como validado un proceso aunque existan preguntas pendientes.
+
+Corregir esta lógica.
+
+### Nueva regla
+
+Para marcar un proceso como validado, comprobar:
+
+- Que no existan contradicciones críticas abiertas.
+- Que las decisiones tengan conexiones suficientemente definidas.
+- Que las actividades estén identificadas.
+- Que no existan conexiones inválidas.
+- Que las cuestiones críticas estén resueltas o explícitamente aceptadas como pendientes con una justificación y una política documental que lo permita.
+- Que el usuario confirme la revisión.
+
+No asumir que todas las preguntas tienen la misma importancia.
+
+### Criticidad
+
+Clasificar preguntas en:
+
+- Crítica: afecta al funcionamiento correcto del flujo.
+- Importante: afecta a la comprensión o a las responsabilidades.
+- Complementaria: aporta información adicional.
+
+Las preguntas críticas deben resolverse antes de validar formalmente el contenido.
+
+El usuario podrá exportar borradores incompletos, claramente identificados.
+
+### Terminología
+
+Utilizar "Validado por el usuario" o "Revisado internamente", no "Aprobación oficial" cuando no existe una aprobación formal del cliente.
+
+Diferenciar:
+
+- Revisión del analista.
+- Validación del responsable del proceso.
+- Aprobación documental de la organización.
+
+En el MVP pueden implementarse los primeros estados de manera sencilla.
+
+---
+
+## 4.2. Actualización controlada con Gemini
+
+Actualmente Gemini puede devolver un modelo completo actualizado después de responder una pregunta.
+
+Esto introduce riesgo de modificar campos que no estaban relacionados con la respuesta.
+
+### Solución recomendada
+
+Utilizar cambios estructurados o parches.
+
+Gemini debe proponer únicamente las modificaciones justificadas por las respuestas.
+
+Cada cambio debe indicar:
+
+- Elemento afectado.
+- Campo.
+- Valor anterior.
+- Valor propuesto.
+- Evidencia.
+- Motivo.
+
+Validar el parche antes de aplicarlo.
+
+No permitir que una respuesta sobre un responsable modifique silenciosamente otras actividades.
+
+Preservar identificadores estables.
+
+Guardar una instantánea anterior cuando el cambio sea importante.
+
+Actualizar las preguntas y el modelo de forma coherente, evitando situaciones en las que la pregunta figure como respondida pero la actividad no haya podido actualizarse.
+
+Si la operación falla, conservar el proceso anterior y mostrar el error.
+
+---
+
+# 5. REDISEÑO DE LOS DIAGRAMAS
+
+Archivos principales:
+
+- `src/components/ProcessFlowDiagram.tsx`
+- `src/components/ProcessWorkspace.tsx`
+- `src/components/ProcedureDocumentView.tsx`
+- `src/lib/exportDrawio.ts`
+
+## 5.1. Problemas detectados
+
+El diagrama actual utiliza React Flow, pero los nodos se colocan principalmente en una columna vertical.
+
+Esto dificulta representar:
+
+- Decisiones.
+- Bifurcaciones.
+- Caminos alternativos.
+- Retornos.
+- Reprocesos.
+- Excepciones.
+
+Además, la representación actual está orientada principalmente a seleccionar nodos, no a editar visualmente el grafo completo.
+
+En el editor de actividades, añadir un paso después de otro puede crear una conexión nueva sin retirar o revisar las conexiones anteriores.
+
+Eliminar una actividad puede dejar caminos desconectados.
+
+Estas operaciones deben tratarse como cambios sobre un grafo, no únicamente sobre una lista.
+
+## 5.2. Nueva diagramación automática
+
+Implementar una disposición inteligente que respete las relaciones del proceso.
+
+Utilizar, si resulta técnicamente adecuado, ELK.js o Dagre.
+
+Priorizar:
+
+- Legibilidad.
+- Separación de ramas.
+- Evitar cruces.
+- Espaciado consistente.
+- Etiquetas visibles.
+- Retornos comprensibles.
+
+Mantener una vista vertical como predeterminada.
+
+Permitir carriles por responsable cuando mejoren la comprensión.
+
+No utilizar el número de paso como sustituto de las relaciones reales del grafo.
+
+## 5.3. Edición del diagrama
+
+El usuario debe poder:
+
+- Seleccionar una actividad.
+- Modificar nombre.
+- Modificar responsable.
+- Modificar descripción.
+- Cambiar tipo de nodo.
+- Insertar una actividad entre dos nodos.
+- Crear conexiones.
+- Eliminar conexiones.
+- Definir condiciones.
+- Crear y corregir retornos.
+- Eliminar actividades.
+
+Cuando se inserta un nodo en una conexión:
+
+A → B
+
+Debe poder transformarse en:
+
+A → Nuevo nodo → B
+
+Sin mantener accidentalmente una conexión adicional A → B.
+
+En decisiones con múltiples ramas, solicitar cuál debe modificarse.
+
+Cuando se elimina una actividad con varias entradas o salidas, no reconectar automáticamente sin conocer la intención.
+
+Pedir confirmación o mostrar opciones válidas.
+
+## 5.4. Validación del grafo
+
+Implementar una función centralizada:
+
+`validateProcessGraph(process)`
+
+Debe detectar:
+
+- IDs duplicados.
+- Conexiones hacia actividades inexistentes.
+- Nodos aislados.
+- Decisiones sin caminos definidos.
+- Etiquetas de decisión duplicadas o contradictorias.
+- Nodos inaccesibles.
+- Finalizaciones inconsistentes.
+- Caminos abiertos.
+- Conexiones duplicadas no justificadas.
+
+Los ciclos son válidos cuando representan retornos o reprocesos reales.
+
+No eliminarlos automáticamente.
+
+No sustituir un grafo incompleto por una cadena lineal inventada.
+
+## 5.5. Sincronización
+
+Cada cambio del grafo debe actualizar el modelo estructurado.
+
+La documentación debe regenerarse o sincronizarse utilizando los mismos identificadores.
+
+Evitar modificar manualmente dos versiones independientes de un mismo proceso.
+
+---
+
+# 6. REDISEÑO DOCUMENTAL Y EXPORTACIONES
+
+Archivos principales:
+
+- `src/lib/exportDocx.ts`
+- `src/lib/exportPdf.ts`
+- `src/lib/exportDrawio.ts`
+- `src/lib/exportZip.ts`
+- `src/components/ExportView.tsx`
+
+## 6.1. Problemas detectados
+
+Actualmente existen generadores independientes para Word y PDF.
+
+Su lógica de presentación no es idéntica.
+
+El PDF utiliza posicionamiento manual y no resuelve de manera completa ciertos escenarios de textos extensos, filas grandes, tablas y saltos de página.
+
+El Word utiliza una estructura documental fija.
+
+No existe todavía una integración real para importar y aplicar una plantilla Word del cliente.
+
+Los documentos tampoco incorporan el diagrama del proceso.
+
+El módulo draw.io genera elementos editables en XML, pero mantiene una disposición secuencial que puede resultar poco profesional para diagramas complejos.
+
+## 6.2. Modelo documental común
+
+Implementar una capa intermedia:
+
+`OfficialDocumentModel`
+
+Esta capa debe representar exclusivamente la información oficial del proceso.
+
+Debe incluir:
+
+- Identificación.
+- Metadatos.
+- Secciones.
+- Actividades.
+- Decisiones.
+- Registros.
+- Controles existentes.
+- Revisiones.
+- Representación del diagrama.
+
+DOCX y PDF deben generarse desde ese mismo modelo aprobado.
+
+No mantener dos lógicas independientes que determinen qué información incluir.
+
+## 6.3. Separación obligatoria de hallazgos
+
+Crear una función equivalente a:
+
+`buildOfficialDocumentModel(process)`
+
+Debe seleccionar explícitamente los campos permitidos.
+
+Nunca pasar `privateImprovements` ni otros datos de consultoría al renderizador de documentos oficiales.
+
+Implementar pruebas con marcadores privados exclusivos para confirmar que no aparecen en:
+
+- Word.
+- PDF.
+- Markdown oficial, si se mantiene.
+- Metadatos de los archivos.
+- ZIP de entrega.
+
+La separación debe aplicarse por diseño, no solamente mediante instrucciones del modelo.
+
+## 6.4. Plantillas Word por cliente
+
+Implementar la funcionalidad real que todavía falta.
+
+El usuario debe poder cargar una plantilla DOCX de un cliente.
+
+La aplicación deberá conservar o reproducir de manera verificable:
+
+- Logotipo.
+- Encabezados.
+- Pies.
+- Tipografías.
+- Tablas.
+- Estilos.
+- Códigos.
+- Versiones.
+- Secciones.
+
+No utilizar únicamente un documento genérico con el nombre de la empresa.
+
+Estudiar una estrategia basada en marcadores documentales.
+
+Si la plantilla es arbitraria y no se puede interpretar completamente, solicitar una configuración inicial sencilla.
+
+Permitir definir una plantilla base predeterminada.
+
+### Importante
+
+El motor de plantillas debe adaptarse a distintos clientes sin requerir cambios de código.
+
+## 6.5. Mejorar el documento Word
+
+Requisitos:
+
+- Portada o encabezado corporativo según plantilla.
+- Código documental.
+- Versión.
+- Fecha de emisión.
+- Estado.
+- Objetivo.
+- Alcance.
+- Responsabilidades.
+- Desarrollo.
+- Excepciones existentes.
+- Registros y referencias.
+- Diagrama.
+- Historial real de revisiones.
+- Numeración de páginas.
+- Tablas legibles.
+- Saltos de página adecuados.
+
+Para instructivos, adaptar el detalle de los pasos.
+
+Para procesos, priorizar interacciones, entradas y salidas.
+
+No inventar secciones mediante texto genérico.
+
+## 6.6. Mejorar el PDF
+
+Generar un documento profesional con:
+
+- Mismos datos que Word.
+- Sin textos recortados.
+- Sin solapamientos.
+- Sin tablas fuera de página.
+- Paginación correcta.
+- Tipografía legible.
+- Diagramas integrados.
+- Encabezados y pies consistentes.
+
+Evaluar si conviene generar el PDF a partir de una representación compartida para evitar divergencias.
+
+Si se mantiene jsPDF, implementar un motor de distribución adecuado para contenidos largos.
+
+Probar documentos de 2, 10 y 30 páginas.
+
+## 6.7. Mejorar draw.io
+
+El archivo debe seguir siendo editable.
+
+Reutilizar la lógica de disposición del grafo para evitar inconsistencias.
+
+Implementar:
+
+- Coordenadas apropiadas.
+- Formas.
+- Flechas.
+- Etiquetas.
+- Colores coherentes.
+- Identificadores estables.
+- Conexiones verificadas.
+- XML válido.
+- Compatibilidad con diagrams.net.
+
+No generar conexiones secuenciales ficticias como respaldo.
+
+Escapar correctamente contenido textual e identificadores.
+
+Comprobar que el archivo puede abrirse y editarse.
+
+## 6.8. Revisión de exportación
+
+Eliminar de la interfaz expresiones como:
+
+"Garantía de Conformidad ISO 9001:2026".
+
+La aplicación no puede garantizar conformidad normativa únicamente por producir un documento.
+
+Sustituirlas por mensajes precisos como:
+
+"Documento estructurado utilizando buenas prácticas de gestión por procesos y control de información documentada".
+
+La norma ISO 9001:2026 puede utilizarse como referencia vigente, sin afirmar certificación.
+
+No incluir sellos ni afirmaciones de certificación no acreditadas.
+
+---
+
+# 7. CONTROL DOCUMENTAL Y VERSIONES
+
+Archivo actual:
+
+`src/components/ProcessWorkspace.tsx`
+
+## Problema
+
+El historial actual registra principalmente números de versión y descripciones.
+
+No representa necesariamente una instantánea recuperable del documento.
+
+Además, la numeración se incrementa mediante operaciones decimales que no constituyen un sistema robusto de versionado.
+
+## Rediseño
+
+Diferenciar:
+
+**Borrador de trabajo**
+
+Estado editable actual.
+
+**Versión guardada**
+
+Instantánea del modelo en un momento determinado.
+
+**Versión validada**
+
+Instantánea aprobada por el usuario responsable.
+
+### Funciones
+
+- Guardar versión.
+- Añadir descripción del cambio.
+- Consultar versiones anteriores.
+- Recuperar una versión.
+- Comparar cambios principales.
+- Conservar fecha y autor.
+- Evitar sobrescribir una versión validada.
+
+Utilizar un sistema de versión sencillo, consistente y configurable.
+
+Una modificación posterior a la validación debe generar una nueva revisión o devolver el documento al estado de revisión.
+
+No mantener automáticamente el estado validado después de un cambio operativo relevante.
+
+### Criterio de aceptación
+
+Validar la versión 1.0.
+
+Modificar una actividad.
+
+Guardar una nueva revisión.
+
+Poder recuperar la versión 1.0 sin perder la versión posterior.
+
+---
+
+# 8. SEPARACIÓN REAL ENTRE CLIENTES
+
+## Problema detectado
+
+La aplicación dispone de un cliente activo, pero las listas de procesos no se filtran de forma consistente por cliente.
+
+La sección de exportación también recibe el cliente activo y la lista general de procesos.
+
+Esto puede provocar que un procedimiento perteneciente a una organización termine exportado bajo la identificación de otra.
+
+## Corrección
+
+Implementar aislamiento lógico completo.
+
+Todas las consultas deberán estar relacionadas con:
+
+- Usuario autorizado.
+- Cliente.
+- Relevamiento.
+- Proceso.
+
+Cuando selecciono un cliente, solo debo visualizar sus relevamientos y documentación.
+
+La exportación debe recuperar el cliente real relacionado con el proceso, no confiar únicamente en el cliente actualmente seleccionado en la interfaz.
+
+Implementar validaciones de integridad de las relaciones.
+
+Prohibir que un proceso pueda vincularse arbitrariamente a un cliente de otro usuario.
+
+### Criterio de aceptación
+
+Crear dos empresas con procesos similares.
+
+Alternar entre ellas.
+
+Comprobar que no se mezclan nombres, códigos, plantillas, transcripciones, archivos o hallazgos.
+
+---
+
+# 9. REDISEÑO DE EXPERIENCIA DE USUARIO
+
+Actualmente la navegación tiene demasiadas secciones principales para una herramienta cuyo objetivo es simplificar el trabajo.
+
+Quiero reorganizarla.
+
+## 9.1. Nueva estructura
+
+### Inicio
+
+Mostrar:
+
+- Cliente seleccionado.
+- Relevamientos recientes.
+- Procesos en curso.
+- Botón destacado "Nuevo relevamiento".
+
+Evitar cuadros estadísticos innecesarios.
+
+### Clientes
+
+Configuración de empresas, plantillas y documentos.
+
+### Relevamiento
+
+Concentrar el proceso principal en un asistente de cinco etapas.
+
+**1. Cargar**
+
+Transcripción o audio.
+
+**2. Identificar**
+
+Procesos, procedimientos e instructivos encontrados.
+
+**3. Validar**
+
+Dudas y contradicciones.
+
+**4. Revisar**
+
+Diagrama y documento.
+
+**5. Exportar**
+
+Entregables.
+
+No obligar a cambiar constantemente entre menús superiores.
+
+## 9.2. Espacio de revisión
+
+Diseñar una pantalla donde:
+
+- A la izquierda se visualice el flujo.
+- A la derecha aparezca la narración estructurada.
+- Al seleccionar un nodo se identifique su actividad documental.
+- Al seleccionar un paso del procedimiento se resalte el nodo correspondiente.
+- Exista una acción "Ver evidencia original".
+- Los cambios se puedan guardar con facilidad.
+
+En móviles o pantallas pequeñas, utilizar pestañas en lugar de una pantalla dividida demasiado estrecha.
+
+## 9.3. Hallazgos privados
+
+Mantener la sección "Oportunidades de mejora", pero convertirla en un panel secundario vinculado al proceso.
+
+No mezclarla con la revisión oficial.
+
+Permitir:
+
+- Registrar punto de dolor.
+- Añadir hallazgo.
+- Vincular actividad.
+- Identificar oportunidad.
+- Modificar prioridad.
+- Descartar.
+- Consultar evidencia.
+
+Evitar tablas complejas de consultoría en esta primera versión.
+
+## 9.4. Interfaz limpia
+
+Utilizar un diseño moderno y sobrio.
+
+- Fondo claro.
+- Tipografía profesional.
+- Colores limitados.
+- Buen contraste.
+- Navegación visible.
+- Formularios breves.
+- Botones claros.
+- Mensajes útiles.
+- Estados comprensibles.
+
+No añadir animaciones que no aporten valor.
+
+---
+
+# 10. MEJORAS DEL MOTOR DE IA
+
+Archivo principal:
+
+`server.ts`
+
+## 10.1. Separar etapas lógicas
+
+Actualmente el análisis principal intenta generar una cantidad elevada de contenido en una sola respuesta.
+
+Esto puede provocar:
+
+- Omisiones.
+- Clasificaciones incorrectas.
+- Conexiones contradictorias.
+- Preguntas superficiales.
+- Recomendaciones no justificadas.
+
+Rediseñar el motor como una secuencia lógica controlada:
+
+1. Comprender la transcripción.
+2. Identificar unidades documentales.
+3. Estructurar actividades.
+4. Construir el grafo.
+5. Detectar lagunas y contradicciones.
+6. Detectar oportunidades privadas.
+7. Generar documentación desde el modelo.
+
+No significa obligatoriamente realizar siete llamadas a Gemini.
+
+Elegir una estrategia razonable según coste, tamaño de la reunión y complejidad.
+
+Sin embargo, validar cada resultado intermedio antes de utilizarlo.
+
+## 10.2. Esquemas estrictos
+
+Utilizar salida estructurada con schemas.
+
+Validar:
+
+- Tipos documentales.
+- Tipos de actividades.
+- Identificadores.
+- Conexiones.
+- Preguntas.
+- Prioridades.
+- Estados.
+
+Rechazar o marcar como inválidas las respuestas que no respeten los contratos.
+
+No asumir que un JSON sintácticamente válido representa un proceso correcto.
+
+## 10.3. Modelo configurable
+
+No fijar el modelo Gemini en varios puntos del código.
+
+Centralizar su configuración.
+
+Permitir cambiar de modelo sin modificar toda la aplicación.
+
+Registrar de manera no sensible:
+
+- Modelo utilizado.
+- Duración del análisis.
+- Resultado.
+- Error, si existe.
+- Tokens o coste estimado, cuando la API facilite datos fiables.
+
+## 10.4. Relevamientos extensos
+
+Preparar soporte para conversaciones largas.
+
+Evitar enviar archivos enormes sin control.
+
+Cuando sea necesario, procesar la información por segmentos preservando contexto y referencias.
+
+No perder actividades porque la conversación es extensa.
+
+## 10.5. Política de incertidumbre
+
+La IA debe poder reconocer que no dispone de información suficiente.
+
+Ejemplo:
+
+"El responsable revisa el documento y luego lo aprueba".
+
+Si no se sabe quién es el responsable, no asignarlo.
+
+Si no se sabe qué comprueba, no inventar criterios.
+
+Si no se conoce el tratamiento del rechazo, formular una pregunta.
+
+El sistema debe preferir información incompleta pero fiable frente a documentación completa pero ficticia.
+
+---
+
+# 11. PRIVACIDAD Y PREPARACIÓN COMERCIAL
+
+El producto puede evolucionar hacia una aplicación ofrecida a organizaciones.
+
+Por eso es importante establecer buenas bases desde ahora.
+
+## Medidas requeridas
+
+- Control de acceso.
+- Separación entre clientes.
+- Restricción de usuario inicial.
+- Protección de API.
+- Almacenamiento privado.
+- Reglas de Firestore verificadas.
+- Reglas de Storage cuando se utilice.
+- Eliminación de documentos.
+- Gestión de archivos temporales.
+- Política de conservación.
+- Copias de seguridad.
+- Registros sin información confidencial.
+- Información clara sobre los datos enviados a Gemini.
+
+No implementar todavía un sistema complejo de facturación, licencias o roles empresariales.
+
+Preparar la arquitectura para ello.
+
+### Particularidad de Firestore
+
+Considerar sus límites de tamaño por documento.
+
+No almacenar transcripciones extensas y archivos binarios indiscriminadamente dentro de un único documento Firestore.
+
+Utilizar almacenamiento privado para archivos y Firestore para metadatos y estructuras apropiadas.
+
+### Configuración Firebase
+
+Verificar que el proyecto Firebase configurado pertenece realmente al entorno deseado.
+
+Revisar reglas, base de datos, almacenamiento y dominios autorizados antes del despliegue.
+
+No cambiar de proyecto Firebase automáticamente sin autorización.
+
+---
+
+# 12. PLAN DE CORRECCIONES PRIORIZADO
+
+No intentes corregir todo simultáneamente.
+
+Trabaja por bloques funcionales y conserva siempre la posibilidad de probar el sistema.
+
+## FASE 0 — Protección del proyecto
+
+Antes de modificar:
+
+1. Inspeccionar el estado actual del código.
+2. Identificar funcionalidades existentes.
+3. Crear un punto de restauración.
+4. Preparar un plan breve.
+5. Confirmar dependencias actuales.
+6. Identificar datos existentes que deben conservarse.
+
+No eliminar ni sobrescribir datos reales.
+
+No cambiar el repositorio remoto sin autorización.
+
+## FASE 1 — Correcciones críticas P0
+
+Resolver:
+
+- Autenticación de API.
+- Autorización.
+- Persistencia completa.
+- Recuperación al iniciar.
+- Separación por usuario y cliente.
+- Eliminación de datos ficticios automáticos.
+- Validación real de procesos.
+- Manejo correcto de errores asíncronos.
+
+Esta fase tiene prioridad absoluta.
+
+No avanzar a funciones secundarias hasta verificarla.
+
+## FASE 2 — Modelo de procesos
+
+Implementar:
+
+- Fuente única de verdad.
+- Evidencias.
+- Trazabilidad.
+- Clasificación documental.
+- Detección de lagunas.
+- Reconciliación de respuestas.
+- Validación del grafo.
+- Integridad de relaciones.
+
+## FASE 3 — Editor visual
+
+Implementar:
+
+- Diagramación mejorada.
+- Edición real de conexiones.
+- Inserción segura.
+- Eliminación segura.
+- Decisiones y retornos.
+- Sincronización con procedimiento.
+
+## FASE 4 — Calidad documental
+
+Implementar:
+
+- Modelo documental común.
+- Distinción proceso/procedimiento/instructivo.
+- Exportación DOCX mejorada.
+- Exportación PDF mejorada.
+- draw.io mejorado.
+- Diagramas integrados en documentos.
+- Plantillas por cliente.
+- Separación probada de hallazgos privados.
+
+## FASE 5 — Experiencia de usuario
+
+Simplificar la navegación.
+
+Implementar el flujo de cinco etapas.
+
+Mejorar estados, mensajes, edición y guardado.
+
+Eliminar complejidad visual innecesaria.
+
+## FASE 6 — Preparación comercial
+
+Implementar:
+
+- Versiones recuperables.
+- Pruebas de aislamiento.
+- Protección contra uso abusivo de la API.
+- Gestión de errores.
+- Pruebas automatizadas.
+- Documentación técnica mínima.
+- Configuración segura de despliegue.
+
+No desarrollar funcionalidades comerciales avanzadas todavía.
+
+---
+
+# 13. PRUEBAS DE ACEPTACIÓN OBLIGATORIAS
+
+Antes de considerar el trabajo terminado, ejecutar pruebas.
+
+## Prueba 1 — Una reunión con varios procesos
+
+Introducir una entrevista logística que describa:
+
+- Recepción de mercancías.
+- Devoluciones.
+- Instructivo SAP MIGO.
+
+Resultado:
+
+La IA identifica unidades diferenciadas y permite corregir su clasificación.
+
+## Prueba 2 — Información incompleta
+
+Introducir una decisión sin responsable ni criterio.
+
+Resultado:
+
+La aplicación genera preguntas y no inventa los datos.
+
+## Prueba 3 — Validación
+
+Intentar validar un proceso con preguntas críticas abiertas.
+
+Resultado:
+
+La validación debe bloquearse y explicar los motivos.
+
+## Prueba 4 — Modificación de actividades
+
+Insertar una actividad entre dos pasos existentes.
+
+Resultado:
+
+El grafo actualiza correctamente las conexiones.
+
+No deben aparecer caminos adicionales accidentales.
+
+## Prueba 5 — Borrado de actividad
+
+Eliminar una actividad con varias conexiones.
+
+Resultado:
+
+El sistema debe solicitar resolver la conexión o marcarla como pendiente.
+
+No debe improvisar una nueva secuencia.
+
+## Prueba 6 — Persistencia
+
+Crear un cliente, relevamiento y proceso.
+
+Cerrar y reabrir la aplicación.
+
+Resultado:
+
+Todos los elementos siguen disponibles.
+
+## Prueba 7 — Separación por cliente
+
+Crear dos clientes y procesos diferentes.
+
+Resultado:
+
+No se mezcla su información, configuración o documentación.
+
+## Prueba 8 — Sincronización
+
+Modificar un responsable desde el documento.
+
+Resultado:
+
+Se actualiza el mismo responsable en el modelo del diagrama.
+
+## Prueba 9 — Word
+
+Generar un documento con más de diez actividades y una tabla extensa.
+
+Resultado:
+
+Archivo válido, editable, legible y con estructura consistente.
+
+## Prueba 10 — PDF
+
+Generar documentos largos.
+
+Resultado:
+
+Sin cortes, solapamientos ni desbordamientos de página.
+
+## Prueba 11 — draw.io
+
+Exportar un diagrama con decisiones y retornos.
+
+Resultado:
+
+El archivo se abre en diagrams.net y todas las formas y conexiones se pueden editar.
+
+## Prueba 12 — Confidencialidad de mejoras
+
+Introducir un hallazgo privado que contenga un marcador exclusivo:
+
+`HALLAZGO_PRIVADO_PRUEBA_82741`
+
+Generar Word, PDF y ZIP oficial.
+
+Resultado:
+
+El marcador no debe estar presente en ninguno de los contenidos oficiales ni metadatos exportados.
+
+## Prueba 13 — Control de versiones
+
+Guardar una versión validada.
+
+Modificar el proceso.
+
+Resultado:
+
+La versión anterior permanece recuperable.
+
+## Prueba 14 — API protegida
+
+Enviar una solicitud de análisis sin autenticación.
+
+Resultado:
+
+La solicitud debe rechazarse.
+
+## Prueba 15 — Fallo de Gemini
+
+Simular una respuesta inválida de Gemini.
+
+Resultado:
+
+No se pierde información, no se inventa un proceso y aparece un error comprensible.
+
+## Prueba 16 — Regresión
+
+Verificar que las funcionalidades anteriores que ya funcionaban siguen operativas después de cada fase.
+
+Crear pruebas automatizadas para todos los escenarios que puedan validarse mediante código.
+
+Identificar explícitamente las pruebas manuales pendientes.
+
+---
+
+# 14. CRITERIOS DE CALIDAD DOCUMENTAL
+
+No basta con comprobar que se ha generado un archivo.
+
+La documentación debe cumplir criterios de ingeniería de procesos.
+
+Evaluar:
+
+### Fidelidad
+
+¿Cada actividad tiene respaldo en la transcripción o validación humana?
+
+### Completitud
+
+¿Se han identificado las actividades relevantes descritas?
+
+### Coherencia
+
+¿El texto y el diagrama representan el mismo proceso?
+
+### Secuencia
+
+¿Las conexiones representan la lógica operativa real?
+
+### Responsabilidades
+
+¿Los actores están correctamente asignados o pendientes?
+
+### Excepciones
+
+¿Se representan los tratamientos descritos?
+
+### Claridad
+
+¿Puede un trabajador comprender cómo realizar la actividad?
+
+### Trazabilidad
+
+¿Se puede consultar la evidencia de las decisiones relevantes?
+
+### Control documental
+
+¿El archivo está correctamente identificado, versionado y clasificado?
+
+### Separación
+
+¿Las recomendaciones privadas permanecen fuera de la documentación oficial?
+
+No presentar un documento como validado por la empresa si únicamente ha sido revisado por el usuario de la aplicación.
+
+---
+
+# 15. QUÉ NO DEBES DESARROLLAR AHORA
+
+Para evitar que la aplicación vuelva a complicarse, NO incorporar en esta iteración:
+
+- Facturación a clientes.
+- Pasarelas de pago.
+- Marketplace.
+- Publicación de procedimientos en portales externos.
+- Asistente conversacional general.
+- Generación de videos.
+- Narraciones por voz.
+- Chatbots internos de empresa.
+- Dashboards financieros.
+- Automatización de procesos empresariales.
+- Ejecución automática de tareas.
+- Simulación de procesos.
+- Motor BPMN completo.
+- Inteligencia artificial multiagente innecesaria.
+- Sistemas complejos de roles organizativos.
+
+Estas posibilidades pueden evaluarse en el futuro.
+
+Ahora necesitamos perfeccionar el producto principal.
+
+---
+
+# 16. FORMA DE TRABAJAR EN GOOGLE AI STUDIO
+
+Estás trabajando sobre una aplicación ya generada.
+
+Tu objetivo es mejorarla progresivamente.
+
+### Procedimiento
+
+1. Inspecciona el código actual.
+2. Contrasta los hallazgos de esta auditoría.
+3. Identifica las correcciones imprescindibles.
+4. Priorízalas.
+5. Implementa la fase correspondiente.
+6. Ejecuta las comprobaciones disponibles.
+7. Informa del resultado.
+8. Continúa con la siguiente fase cuando la anterior sea estable.
+
+No afirmes que una funcionalidad está terminada si no se ha probado.
+
+No modifiques varias áreas sin relación en una misma operación si eso dificulta detectar regresiones.
+
+No elimines funcionalidades útiles para simplificar la implementación.
+
+No utilices datos ficticios para simular el funcionamiento de la aplicación en producción.
+
+No sustituyas las llamadas reales a Gemini por respuestas predefinidas.
+
+### Informe después de cada fase
+
+Entregar:
+
+- Funcionalidades corregidas.
+- Archivos modificados.
+- Decisiones arquitectónicas.
+- Pruebas ejecutadas.
+- Resultados de las pruebas.
+- Problemas pendientes.
+- Riesgos detectados.
+- Próxima fase recomendada.
+
+Si el entorno impide realizar una prueba, indicarlo explícitamente.
+
+Mantén la aplicación ejecutable después de cada fase.
+
+---
+
+# 17. RESULTADO FINAL DESEADO
+
+Quiero una aplicación que permita realizar este flujo:
+
+**1. Selecciono una empresa.**
+
+La aplicación utiliza su configuración y plantilla documental.
+
+**2. Cargo una reunión.**
+
+Puede ser texto o audio.
+
+**3. Gemini interpreta la información.**
+
+Identifica procesos, procedimientos, instructivos y sus relaciones.
+
+**4. Reviso las unidades identificadas.**
+
+Puedo aceptar, modificar, fusionar o subdividir.
+
+**5. Valido el contenido.**
+
+Respondo preguntas y resuelvo contradicciones.
+
+**6. Reviso el resultado.**
+
+Visualizo el diagrama y el procedimiento sincronizados.
+
+**7. Registro oportunidades.**
+
+Puedo marcar puntos de dolor sin contaminar el documento oficial.
+
+**8. Descargo los entregables.**
+
+Obtengo Word, PDF y draw.io editables, con una presentación profesional.
+
+**9. Continúo trabajando en otro momento.**
+
+Toda la información queda correctamente almacenada.
+
+**10. Mantengo control documental.**
+
+Puedo consultar versiones anteriores y recuperar información.
+
+---
+
+# 18. PRINCIPIO DE DISEÑO IRRENUNCIABLE
+
+La ventaja competitiva de Process AI no será tener más funcionalidades que otras herramientas.
+
+Será su capacidad de convertir conocimiento operativo informal en documentación formal, clara y fiable.
+
+La aplicación deberá combinar:
+
+- Inteligencia artificial potente.
+- Criterio de ingeniería de procesos.
+- Validación humana.
+- Trazabilidad.
+- Documentación profesional.
+- Diagramación editable.
+- Simplicidad de uso.
+
+El sistema debe priorizar la realidad operativa frente a cualquier interpretación idealizada.
+
+**Prefiero un documento incompleto que indique correctamente lo que falta antes que un documento aparentemente perfecto que incluya información inventada.**
+
+---
+
+# 19. INSTRUCCIÓN FINAL
+
+Comienza ahora revisando el proyecto actual y aplicando la FASE 0.
+
+Después aborda las correcciones P0 de la FASE 1.
+
+No reinicies el proyecto.
+
+No elimines código funcional sin justificación.
+
+No hagas un despliegue público ni cambies recursos Firebase de producción sin autorización.
+
+Prioriza que el sistema guarde realmente todo el trabajo, proteja la información, no invente actividades y no valide incorrectamente los procesos.
+
+Una vez estabilizado este núcleo, continúa con los bloques de mejora restantes según el orden definido.
+
+**Quiero evolucionar Process AI V02 desde un prototipo generado con inteligencia artificial hasta una herramienta profesional de ingeniería de procesos, sin perder su simplicidad.**

@@ -4,10 +4,12 @@ import { ProcessModel, Client } from '../types/process';
 import { generateDocxBlob } from './exportDocx';
 import { generatePdfBlob } from './exportPdf';
 import { generateDrawioXml } from './exportDrawio';
+import { buildOfficialDocumentModel } from './officialDocumentModel';
 
 export async function exportProcessZip(process: ProcessModel, client?: Client): Promise<void> {
+  const official = buildOfficialDocumentModel(process, client);
   const zip = new JSZip();
-  const baseName = `${process.code || 'PROCESO'}_${process.name.replace(/[^a-zA-Z0-9_\-]/g, '_')}`;
+  const baseName = `${official.code}_${official.title.replace(/[^a-zA-Z0-9_\-]/g, '_')}`;
 
   // 1. DOCX
   const docxBlob = await generateDocxBlob(process, client);
@@ -21,40 +23,41 @@ export async function exportProcessZip(process: ProcessModel, client?: Client): 
   const drawioXml = generateDrawioXml(process);
   zip.file(`${baseName}.drawio`, drawioXml);
 
-  // 4. Markdown Specification
-  const mdSummary = `# ${process.name}
-**Código:** ${process.code || 'PR-01'}  
-**Tipo Documental:** ${process.docType}  
-**Versión:** ${process.version || '1.0'}  
-**Estado:** ${process.status}  
-**Norma de Referencia:** ${client?.isoStandard || 'ISO 9001:2026'}  
+  // 4. Markdown Specification based STRICTLY on official document model
+  const mdSummary = `# ${official.title}
+**Código:** ${official.code}  
+**Tipo Documental:** ${official.docTypeLabel}  
+**Versión:** ${official.version}  
+**Estado:** ${official.status}  
+**Norma de Referencia:** ${official.isoStandard}  
+**Empresa Cliente:** ${official.clientName}  
 
 ## 1. Objeto y Alcance
-- **Objetivo:** ${process.objective}
-- **Alcance:** ${process.scope}
-- **Disparador:** ${process.trigger}
-- **Resultado:** ${process.result}
+- **Objetivo:** ${official.objective}
+- **Alcance:** ${official.scope}
+- **Disparador:** ${official.trigger}
+- **Resultado:** ${official.result}
 
-## 2. Roles y Sistemas
-- **Roles:** ${(process.roles || []).join(', ')}
-- **Sistemas:** ${(process.systems || []).join(', ')}
+## 2. Roles y Sistemas Involucrados
+- **Roles:** ${official.roles.join(', ') || 'Pendientes de confirmar'}
+- **Sistemas:** ${official.systems.join(', ') || 'Ninguno especificado'}
 
-## 3. Procedimiento Operativo AS-IS
-${process.activities
+## 3. Desarrollo de Actividades (AS-IS)
+${official.activities
   .map(
     (a) =>
       `### ${a.stepNumber}. ${a.name} [${a.type.toUpperCase()}]
 - **Responsable:** ${a.role}
-- **Sistema:** ${a.system || 'N/A'}
+- **Sistema:** ${a.system}
 - **Descripción:** ${a.description}
 ${a.exceptions ? `- **Excepción:** ${a.exceptions}` : ''}`
   )
   .join('\n\n')}
 
 ---
-*Generado por Process AI — Documentación ISO 9001*
+*Documento estructurado utilizando buenas prácticas de gestión por procesos y control de información documentada (Ref. ISO 9001:2026).*
 `;
-  zip.file(`${baseName}_especificacion.md`, mdSummary);
+  zip.file(`${baseName}_especificacion_oficial.md`, mdSummary);
 
   const zipContent = await zip.generateAsync({ type: 'blob' });
   saveAs(zipContent, `${baseName}_entregables.zip`);
